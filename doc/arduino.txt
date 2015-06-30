@@ -1,0 +1,136 @@
+*arduino.txt*
+*Arduino* *arduino* *'vim-arduino'*
+===============================================================================
+CONTENTS                                                     *arduino-contents*
+
+    1. Intro...........................................|arduino-intro|
+    2. Options.........................................|arduino-options|
+    3. Commands........................................|arduino-mappings|
+
+===============================================================================
+INTRO                                                           *arduino-intro*
+
+This is a vim plugin to provide basic compatibility and quality-of-life tools
+that integrate with the arduino IDE's commandline API. It requires the arduino
+IDE to be installed.
+
+The basic operations that are supported are compiling, uploading, and
+debugging your projects from within vim. See the |arduino-mappings| for
+details.
+
+===============================================================================
+OPTIONS                                                       *arduino-options*
+
+Overview:~
+
+  |arduino_board|................The fully-qualified name of the board.
+  |arduino_args|.................Additional args to pass to 'arduino' command.
+  |arduino_serial_cmd|...........Command to run to attach to serial port.
+  |arduino_serial_baud|..........The baud rate for the serial connection.
+  |arduino_auto_baud|............Auto-detect the baud rate.
+  |arduino_serial_tmux|..........Tmux command to open serial debugger.
+  |arduino_serial_port|..........Location of the serial port.
+  |arduino_serial_port_globs|....Globs to auto-search for serial port.
+
+-------------------------------------------------------------------------------
+Detailed descriptions and default values:~
+
+                                                            *'g:arduino_board'*
+The board type to use when compiling and uploading. See also
+|:ArduinoSetBoard|. >
+  let g:arduino_board = 'arduino:avr:uno'
+<
+                                                             *'g:arduino_args'*
+Additional arguments that will be passed to the 'arduino' command during build
+and upload. >
+  let g:arduino_args = '--verbose'
+<
+                                                       *'g:arduino_serial_cmd'*
+Command used to connect to the serial port for debugging. The strings '{port}'
+and '{baud}' will be interpolated. >
+  let g:arduino_serial_cmd = 'screen {port} {baud}'
+  let g:arduino_serial_cmd = 'picocom {port} -b {baud} -l'
+<
+
+                                                      *'g:arduino_serial_baud'*
+The baud rate to use for the debugging serial connection. >
+  let g:arduino_serial_baud = 9600
+<
+
+                                                       *'g:arduino_auto_baud'*
+Automatically set the baud rate by searching for 'Serial.begin()' >
+  let g:arduino_auto_baud = 1
+<
+
+                                                     *'g:arduino_serial_tmux'*
+If inside a tmux session, open the serial debug port using this tmux command.
+Set to '' to disable. >
+  let g:arduino_serial_tmux = 'split-window -d'
+<
+
+                                                     *'g:arduino_serial_port'*
+Connect to this serial port when uploading & debugging. This is not set by
+default. >
+  let g:arduino_serial_port = /dev/ttyACM0
+<
+
+                                               *'g:arduino_serial_port_globs'*
+Search these patterns to find a likely serial port to upload to. >
+  let g:arduino_serial_port_globs = ['/dev/ttyACM*',
+                                    \'/dev/ttyUSB*',
+                                    \'/dev/tty.usbmodem*',
+                                    \'/dev/tty.usbserial*']
+<
+
+===============================================================================
+COMMANDS                                                     *arduino-commands*
+                                                          *:ArduinoChooseBoard*
+:ArduinoChooseBoard
+   Open a list of available boards and select one.
+
+                                                             *:ArduinoSetBoard*
+:ArduinoSetBoard [board]
+   Set [board] to be the currently selected board. It should match the format
+   of 'package:arch:board[:parameters]'.
+
+   If |g:arduino_board| is not set, the board passed in will be saved to disk
+   and used when you start new vim sessions.
+
+                                                               *:ArduinoVerify*
+:ArduinoVerify
+   Compile your project. You may wish to bind this to a key combination. >
+  nnoremap <leader>c :call ArduinoVerify()<CR>
+<
+   You can also call :make directly. >
+  nnoremap <leader>u :make!<CR>
+<
+                                                               *:ArduinoUpload*
+:ArduinoUpload
+   Compile and upload your project. You may wish to bind this to a key
+   combination. >
+  nnoremap <leader>u :call ArduinoUpload()<CR>
+<
+                                                               *:ArduinoSerial*
+:ArduinoSerial
+   Open a connection to the serial port for debugging. You may wish to bind
+   this to a key combination. >
+  nnoremap <leader>s :call ArduinoSerial()<CR>
+<
+                                                      *:ArduinoUploadAndSerial*
+:ArduinoUploadAndSerial
+   Compile and upload your project. If successful, open a connection to the
+   serial port for debugging. You may with to bind this to a key combination.
+   >
+  nnoremap <leader>d :call ArduinoUploadAndSerial()<CR>
+<
+                                                         *:ArduinoGetSerialCmd*
+:ArduinoGetSerialCmd
+   Return the shell command that will be run to connect to the serial port.
+
+                                                      *:ArduinoGuessSerialPort*
+:ArduinoGuessSerialPort
+   Return the best guess for the port the board is connected to (or 0, if none
+   found).
+
+===============================================================================
+vim:ft=help:et:ts=2:sw=2:sts=2:norl
