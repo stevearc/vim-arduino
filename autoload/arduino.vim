@@ -8,7 +8,7 @@ function! arduino#InitializeConfig()
     endif
   endif
   if !exists('g:arduino_args')
-    let g:arduino_args = '--verbose'
+    let g:arduino_args = '--verbose-upload'
   endif
   if !exists('g:arduino_serial_cmd')
     let g:arduino_serial_cmd = 'screen {port} {baud}'

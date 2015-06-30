@@ -42,8 +42,10 @@ The board type to use when compiling and uploading. See also
 <
                                                              *'g:arduino_args'*
 Additional arguments that will be passed to the 'arduino' command during build
-and upload. >
-  let g:arduino_args = '--verbose'
+and upload. See
+https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc for
+more detail. >
+  let g:arduino_args = '--verbose-upload'
 <
                                                        *'g:arduino_serial_cmd'*
 Command used to connect to the serial port for debugging. The strings '{port}'
@@ -99,7 +101,7 @@ COMMANDS                                                     *arduino-commands*
                                                                *:ArduinoVerify*
 :ArduinoVerify
    Compile your project. You may wish to bind this to a key combination. >
-  nnoremap <leader>c :call ArduinoVerify()<CR>
+  nnoremap <leader>c :ArduinoVerify<CR>
 <
    You can also call :make directly. >
   nnoremap <leader>u :make!<CR>
@@ -108,29 +110,20 @@ COMMANDS                                                     *arduino-commands*
 :ArduinoUpload
    Compile and upload your project. You may wish to bind this to a key
    combination. >
-  nnoremap <leader>u :call ArduinoUpload()<CR>
+  nnoremap <leader>u :ArduinoUpload<CR>
 <
                                                                *:ArduinoSerial*
 :ArduinoSerial
    Open a connection to the serial port for debugging. You may wish to bind
    this to a key combination. >
-  nnoremap <leader>s :call ArduinoSerial()<CR>
+  nnoremap <leader>s :ArduinoSerial<CR>
 <
                                                       *:ArduinoUploadAndSerial*
 :ArduinoUploadAndSerial
    Compile and upload your project. If successful, open a connection to the
    serial port for debugging. You may with to bind this to a key combination.
    >
-  nnoremap <leader>d :call ArduinoUploadAndSerial()<CR>
+  nnoremap <leader>d :ArduinoUploadAndSerial<CR>
 <
-                                                         *:ArduinoGetSerialCmd*
-:ArduinoGetSerialCmd
-   Return the shell command that will be run to connect to the serial port.
-
-                                                      *:ArduinoGuessSerialPort*
-:ArduinoGuessSerialPort
-   Return the best guess for the port the board is connected to (or 0, if none
-   found).
-
 ===============================================================================
 vim:ft=help:et:ts=2:sw=2:sts=2:norl

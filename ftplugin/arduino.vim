@@ -35,7 +35,7 @@ function! s:getArduinoCommand(cmd)
   if exists('g:arduino_serial_port')
     let cmd = cmd . " --port " . g:arduino_serial_port
   endif
-  let cmd = cmd . " " . g:arduino_args . " " . expand('%:h')
+  let cmd = cmd . " " . g:arduino_args . " " . expand('%')
   return cmd
 endfunction
 
@@ -57,7 +57,7 @@ function! s:boardOrder(b1, b2)
 endfunction
 
 " Display a list of boards to the user and allow them to choose the active one
-function! ArduinoChooseBoard()
+function! s:ArduinoChooseBoard()
   let boards = s:getBoards()
   call sort(boards, 's:boardOrder')
   let labels = ["   Select Arduino Board"]
@@ -70,22 +70,25 @@ function! ArduinoChooseBoard()
   if choice <= 0
     return
   endif
-  call ArduinoSetBoard(boards[choice - 1])
+  call s:ArduinoSetBoard(boards[choice - 1])
 endfunction
 
 " Set the active board
-function! ArduinoSetBoard(board)
+function! s:ArduinoSetBoard(board)
   let g:arduino_board = a:board
   let g:_cache_arduino_board = a:board
   call arduino#RebuildMakePrg()
   call arduino#SaveCache()
 endfunction
 
-function! ArduinoVerify()
-  call :make!
+function! s:ArduinoVerify()
+  let cmd = s:getArduinoCommand("arduino --verify")
+  exe ":!" . cmd
+  redraw!
+  return v:shell_error
 endfunction
 
-function! ArduinoUpload()
+function! s:ArduinoUpload()
   let cmd = s:getArduinoCommand("arduino --upload")
   exe ":silent !" . cmd
   redraw!
@@ -116,7 +119,7 @@ function! ArduinoGetSerialCmd()
   return l:cmd
 endfunction
 
-function! ArduinoSerial()
+function! s:ArduinoSerial()
   let cmd = ArduinoGetSerialCmd()
   if strlen($TMUX) && strlen(g:arduino_serial_tmux)
     exe ":silent !tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
@@ -126,9 +129,16 @@ function! ArduinoSerial()
   redraw!
 endfunction
 
-function! ArduinoUploadAndSerial()
-  let ret = ArduinoUpload()
+function! s:ArduinoUploadAndSerial()
+  let ret = s:ArduinoUpload()
   if ret == 0
-    call ArduinoSerial()
+    call s:ArduinoSerial()
   endif
 endfunction
+
+command! ArduinoChooseBoard call s:ArduinoChooseBoard()
+command! -nargs=1 ArduinoSetBoard call s:ArduinoSetBoard(<q-args>)
+command! ArduinoVerify call s:ArduinoVerify()
+command! ArduinoUpload call s:ArduinoUpload()
+command! ArduinoSerial call s:ArduinoSerial()
+command! ArduinoUploadAndSerial call s:ArduinoUploadAndSerial()

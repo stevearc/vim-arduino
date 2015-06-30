@@ -8,8 +8,6 @@
 'g:arduino_serial_tmux'	arduino.txt	/*'g:arduino_serial_tmux'*
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
-:ArduinoGetSerialCmd	arduino.txt	/*:ArduinoGetSerialCmd*
-:ArduinoGuessSerialPort	arduino.txt	/*:ArduinoGuessSerialPort*
 :ArduinoSerial	arduino.txt	/*:ArduinoSerial*
 :ArduinoSetBoard	arduino.txt	/*:ArduinoSetBoard*
 :ArduinoUpload	arduino.txt	/*:ArduinoUpload*
