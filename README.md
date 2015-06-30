@@ -48,3 +48,10 @@ function! b:MyStatusLine()
 endfunction
 setl statusline=%!b:MyStatusLine()
 ```
+
+## License
+Everything is under the [MIT
+License](https://github.com/stevearc/vim-arduino/blob/master/LICENSE) except for
+the wonderful syntax file, which was created by Johannes Hoff and copied from
+[vim.org](http://www.vim.org/scripts/script.php?script_id=2654) and is under the
+[Vim License](http://vimdoc.sourceforge.net/htmldoc/uganda.html).
