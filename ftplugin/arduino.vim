@@ -1,7 +1,6 @@
 if exists('b:did_ftplugin')
   finish
 endif
-
 let b:did_ftplugin = 1
 if !exists('g:arduino_did_initialize')
   call arduino#LoadCache()
@@ -56,21 +55,34 @@ function! s:boardOrder(b1, b2)
   return c1 == c2 ? 0 : c1 > c2 ? 1 : -1
 endfunction
 
+let s:boardCb = {}
+function! s:boardCb.onComplete(item, method)
+  call s:ArduinoSetBoard(a:item)
+endfunction
+function! s:boardCb.onAbort()
+endfunction
+
 " Display a list of boards to the user and allow them to choose the active one
 function! s:ArduinoChooseBoard()
   let boards = s:getBoards()
   call sort(boards, 's:boardOrder')
-  let labels = ["   Select Arduino Board"]
-  let idx = 1
-  for board in boards
-    call add(labels, idx . ") " . board)
-    let idx += 1
-  endfor
-  let choice = inputlist(labels)
-  if choice <= 0
-    return
-  endif
-  call s:ArduinoSetBoard(boards[choice - 1])
+  try
+    " If vim-fuzzyfinder is installed, use that to select the board.
+    call fuf#callbackitem#launch('', 0, '>', s:boardCb, boards, 0)
+  catch /E117/
+    " Fall back to a simple inputlist()
+    let labels = ["   Select Arduino Board"]
+    let idx = 1
+    for board in boards
+      call add(labels, idx . ") " . board)
+      let idx += 1
+    endfor
+    let choice = inputlist(labels)
+    if choice <= 0
+      return
+    endif
+    call s:ArduinoSetBoard(boards[choice - 1])
+  endtry
 endfunction
 
 " Set the active board
