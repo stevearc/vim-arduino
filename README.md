@@ -25,6 +25,7 @@ https://github.com/stevearc/vim-arduino/blob/master/doc/arduino.txt
 The main commands you will want to use are:
 
 * `:ArduinoChooseBoard` - Select the type of board from a list.
+* `:ArduinoChoosePort` - Select the serial port from a list.
 * `:ArduinoVerify` - Build the sketch.
 * `:ArduinoUpload` - Build and upload the sketch.
 * `:ArduinoSerial` - Connecto to the board for debugging over a serial port.
@@ -45,6 +46,21 @@ following:
 ```vim
 function! b:MyStatusLine()
   return '%f [' . g:arduino_board . ']'
+endfunction
+setl statusline=%!b:MyStatusLine()
+```
+
+Or if you want something a bit fancier:
+
+```vim
+function! b:MyStatusLine()
+  let port = arduino#GetPort()
+  let line = '%f [' . g:arduino_board . '] ('
+  if !empty(port)
+    let line = line . port . ':'
+  endif
+  let line = line . g:arduino_serial_baud . ')'
+  return line
 endfunction
 setl statusline=%!b:MyStatusLine()
 ```

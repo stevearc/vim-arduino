@@ -9,7 +9,6 @@
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
 :ArduinoSerial	arduino.txt	/*:ArduinoSerial*
-:ArduinoSetBoard	arduino.txt	/*:ArduinoSetBoard*
 :ArduinoUpload	arduino.txt	/*:ArduinoUpload*
 :ArduinoUploadAndSerial	arduino.txt	/*:ArduinoUploadAndSerial*
 :ArduinoVerify	arduino.txt	/*:ArduinoVerify*
