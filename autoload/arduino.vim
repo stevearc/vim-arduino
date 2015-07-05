@@ -2,6 +2,7 @@ if (exists('g:loaded_arduino_autoload') && g:loaded_arduino_autoload)
 	finish
 endif
 let g:loaded_arduino_autoload = 1
+let s:HERE = resolve(expand('<sfile>:p:h:h'))
 
 " Initialization {{{1
 " Set up all user configuration variables
@@ -59,11 +60,17 @@ endfunction
 
 " Arduino command helpers {{{1
 function! arduino#GetArduinoCommand(cmd)
-  let cmd = a:cmd . " --board " . g:arduino_board
-  if exists('g:arduino_serial_port')
-    let cmd = cmd . " --port " . g:arduino_serial_port
+  if exists('g:arduino_cmd')
+    let arduino = g:arduino_cmd
+  else
+    let arduino = s:HERE . '/bin/arduino-headless'
   endif
-  let cmd = cmd . " " . g:arduino_args . " " . expand('%:h')
+  let cmd = arduino . ' ' . a:cmd . " --board " . g:arduino_board
+  let port = arduino#GetPort()
+  if !empty(port)
+    let cmd = cmd . " --port " . port
+  endif
+  let cmd = cmd . " " . g:arduino_args . " " . expand('%')
   return cmd
 endfunction
 
@@ -110,17 +117,7 @@ function! arduino#GetBoardOptions(board)
 endfunction
 
 function! arduino#RebuildMakePrg()
-  let &l:makeprg = arduino#GetArduinoCommand("arduino --verify")
-endfunction
-
-function! arduino#GetArduinoCommand(cmd)
-  let cmd = a:cmd . " --board " . g:arduino_board
-  let port = arduino#GetPort()
-  if !empty(port)
-    let cmd = cmd . " --port " . port
-  endif
-  let cmd = cmd . " " . g:arduino_args . " " . expand('%')
-  return cmd
+  let &l:makeprg = arduino#GetArduinoCommand("--verify")
 endfunction
 
 function! s:BoardOrder(b1, b2)
@@ -216,14 +213,14 @@ function! arduino#SetBoard(board, ...)
 endfunction
 
 function! arduino#Verify()
-  let cmd = arduino#GetArduinoCommand("arduino --verify")
+  let cmd = arduino#GetArduinoCommand("--verify")
   exe ":!" . cmd
   redraw!
   return v:shell_error
 endfunction
 
 function! arduino#Upload()
-  let cmd = arduino#GetArduinoCommand("arduino --upload")
+  let cmd = arduino#GetArduinoCommand("--upload")
   exe ":silent !" . cmd
   redraw!
   return v:shell_error

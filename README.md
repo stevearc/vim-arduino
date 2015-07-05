@@ -35,9 +35,10 @@ To make easy use of these, you may want to bind them to a key combination. You
 can put the following in `.vim/ftplugin/arduino.vim`:
 
 ```vim
-nnoremap <buffer> <leader>m :ArduinoVerify<CR>
-nnoremap <buffer> <leader>u :ArduinoUpload<CR>
-nnoremap <buffer> <leader>d :ArduinoUploadAndSerial<CR>
+nnoremap <buffer> <leader>am :ArduinoVerify<CR>
+nnoremap <buffer> <leader>au :ArduinoUpload<CR>
+nnoremap <buffer> <leader>ad :ArduinoUploadAndSerial<CR>
+nnoremap <buffer> <leader>ab :ArduinoChooseBoard<CR>
 ```
 
 If you want to add the board type to your status line, it's easy with the
@@ -50,7 +51,7 @@ endfunction
 setl statusline=%!b:MyStatusLine()
 ```
 
-Or if you want something a bit fancier:
+Or if you want something a bit fancier that includes serial port info:
 
 ```vim
 function! b:MyStatusLine()

@@ -35,10 +35,11 @@ Overview:~
 -------------------------------------------------------------------------------
 Detailed descriptions and default values:~
 
-                                                            *'g:arduino_board'*
-The board type to use when compiling and uploading. See also
-|:ArduinoSetBoard|. >
-  let g:arduino_board = 'arduino:avr:uno'
+                                                             *'g:arduino_cmd'*
+The path to the 'arduino' command. By default it will use the
+'arduino-headless' script in the 'bin' directory, which looks for 'arduino' in
+your PATH and runs it inside Xvfb if it can. >
+  let g:arduino_cmd = '/usr/share/local/arduino/arduino'
 <
                                                              *'g:arduino_args'*
 Additional arguments that will be passed to the 'arduino' command during build
@@ -47,9 +48,14 @@ https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc for
 more detail. >
   let g:arduino_args = '--verbose-upload'
 <
+                                                            *'g:arduino_board'*
+The board type to use when compiling and uploading. See also
+|:ArduinoChooseBoard|. >
+  let g:arduino_board = 'arduino:avr:uno'
+<
                                                        *'g:arduino_serial_cmd'*
 Command used to connect to the serial port for debugging. The strings '{port}'
-and '{baud}' will be interpolated. >
+and '{baud}' will be replace with the port and baud values. >
   let g:arduino_serial_cmd = 'screen {port} {baud}'
   let g:arduino_serial_cmd = 'picocom {port} -b {baud} -l'
 <
@@ -65,14 +71,16 @@ Automatically set the baud rate by searching for 'Serial.begin()' >
 <
 
                                                      *'g:arduino_serial_tmux'*
-If inside a tmux session, open the serial debug port using this tmux command.
-Set to '' to disable. >
+If inside a tmux session, run the serial connection command inside of this
+tmux command.  Set to '' to disable. The default will create a horizontal
+split. >
   let g:arduino_serial_tmux = 'split-window -d'
 <
 
                                                      *'g:arduino_serial_port'*
 Connect to this serial port when uploading & debugging. This is not set by
-default. If not set, vim-arduino will attempt to guess which port to use. >
+default. If not set, vim-arduino will attempt to guess which port to use. See
+also |:ArduinoChoosePort| >
   let g:arduino_serial_port = /dev/ttyACM0
 <
 
@@ -98,6 +106,7 @@ COMMANDS                                                     *arduino-commands*
    list. If there are any special options for the board (e.g. cpu) successive
    list selections will be opened for those.
 
+                                                           *:ArduinoChoosePort*
 :ArduinoChoosePort [port]
    Set [port] to be the currently selected serial port. If passed no
    arguments, open a list of likely ports and let the user select one.
@@ -108,7 +117,7 @@ COMMANDS                                                     *arduino-commands*
   nnoremap <leader>c :ArduinoVerify<CR>
 <
    You can also call :make directly. >
-  nnoremap <leader>u :make!<CR>
+  nnoremap <leader>m :make!<CR>
 <
                                                                *:ArduinoUpload*
 :ArduinoUpload
