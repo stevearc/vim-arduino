@@ -228,19 +228,19 @@ endfunction
 
 function! arduino#Serial()
   let cmd = arduino#GetSerialCmd()
-  if !cmd | return | endif
+  if empty(cmd) | return | endif
   if !empty($TMUX) && !empty(g:arduino_serial_tmux)
-    exe ":silent !tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
+    exe ":!tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
   else
-    exe ":silent !" . cmd
+    exe ":!" . cmd
   endif
   redraw!
 endfunction
 
 function! arduino#UploadAndSerial()
-  let ret = s:ArduinoUpload()
+  let ret = arduino#Upload()
   if ret == 0
-    call s:ArduinoSerial()
+    call arduino#Serial()
   endif
 endfunction
 
@@ -250,9 +250,9 @@ function! arduino#GetSerialCmd()
   let port = arduino#GetPort()
   if empty(port)
     echoerr "Error! No serial port found"
-    return
+    return ''
   endif
-  let l:cmd = substitute(g:arduino_serial_cmd, '{port}', s:port, 'g')
+  let l:cmd = substitute(g:arduino_serial_cmd, '{port}', port, 'g')
   let l:cmd = substitute(l:cmd, '{baud}', g:arduino_serial_baud, 'g')
   return l:cmd
 endfunction
