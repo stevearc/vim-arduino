@@ -14,6 +14,13 @@ function! arduino#InitializeConfig()
       let g:arduino_board = 'arduino:avr:uno'
     endif
   endif
+  if !exists('g:arduino_programmer')
+    if exists('g:_cache_arduino_programmer')
+      let g:arduino_programmer = g:_cache_arduino_programmer
+    else
+      let g:arduino_programmer = 'arduino:usbtinyisp'
+    endif
+  endif
   if !exists('g:arduino_args')
     let g:arduino_args = '--verbose-upload'
   endif
@@ -54,7 +61,8 @@ function! arduino#SaveCache()
     call mkdir(s:cache_dir, 'p')
   endif
   let lines = []
-  call s:CacheLine(lines, 'g:_cache_arduino_board', g:_cache_arduino_board)
+  call s:CacheLine(lines, 'g:_cache_arduino_board')
+  call s:CacheLine(lines, 'g:_cache_arduino_programmer')
   call writefile(lines, s:cache)
 endfunction
 
@@ -69,6 +77,9 @@ function! arduino#GetArduinoCommand(cmd)
   let port = arduino#GetPort()
   if !empty(port)
     let cmd = cmd . " --port " . port
+  endif
+  if !empty(g:arduino_programmer)
+    let cmd = cmd . " --pref programmer=" . g:arduino_programmer
   endif
   let cmd = cmd . " " . g:arduino_args . " " . expand('%')
   return cmd
@@ -114,6 +125,24 @@ function! arduino#GetBoardOptions(board)
     endif
   endfor
   return options
+endfunction
+
+function! arduino#GetProgrammers()
+  let arduino_dir = arduino#GetArduinoDir()
+  let programmers = []
+  for filename in split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
+    let pieces = split(filename, '/')
+    let package = pieces[-3]
+    let lines = readfile(filename)
+    for line in lines
+      if line =~? '^[^.]*\.name=.*$'
+        let linesplit = split(line, '\.')
+        let programmer = linesplit[0]
+        call add(programmers, package . ':' . programmer)
+      endif
+    endfor
+  endfor
+  return sort(programmers)
 endfunction
 
 function! arduino#RebuildMakePrg()
@@ -191,6 +220,24 @@ function! arduino#SelectOption(value)
   let s:callback_data.opts[opt] = a:value
   call arduino#SetBoard(s:callback_data.board, s:callback_data.opts)
   call arduino#ChooseBoardOption()
+endfunction
+
+" Programmer selection {{{2
+
+function! arduino#ChooseProgrammer(...)
+  if a:0
+    call arduino#SetProgrammer(a:1)
+    return
+  endif
+  let programmers = arduino#GetProgrammers()
+  call arduino#Choose('Arduino Programmer', programmers, 'arduino#SetProgrammer')
+endfunction
+
+function! arduino#SetProgrammer(programmer)
+  let g:_cache_arduino_programmer = a:programmer
+  let g:arduino_programmer = a:programmer
+  call arduino#RebuildMakePrg()
+  call arduino#SaveCache()
 endfunction
 
 " Command functions {{{2
@@ -333,9 +380,10 @@ function! s:FileExists(path)
   return !empty(glob(a:path))
 endfunction
 
-function! s:CacheLine(lines, varname, value)
+function! s:CacheLine(lines, varname)
   if exists(a:varname)
-    call add(a:lines, 'let ' . a:varname . ' = "' . a:value . '"')
+    let value = eval(a:varname)
+    call add(a:lines, 'let ' . a:varname . ' = "' . value . '"')
   endif
 endfunction
 

@@ -53,6 +53,11 @@ The board type to use when compiling and uploading. See also
 |:ArduinoChooseBoard|. >
   let g:arduino_board = 'arduino:avr:uno'
 <
+                                                       *'g:arduino_programmer'*
+The programmer type to use when compiling and uploading. See also
+|:ArduinoChooseProgrammer|. >
+  let g:arduino_programmer = 'arduino:usbtinyisp'
+<
                                                        *'g:arduino_serial_cmd'*
 Command used to connect to the serial port for debugging. The strings '{port}'
 and '{baud}' will be replace with the port and baud values. >
@@ -105,6 +110,17 @@ COMMANDS                                                     *arduino-commands*
    If passed no arguments, open a list and let the user select one from the
    list. If there are any special options for the board (e.g. cpu) successive
    list selections will be opened for those.
+
+                                                     *:ArduinoChooseProgrammer*
+:ArduinoChooseProgrammer [programmer]
+   Set [programmer] to be the currently selected board. It should match the format
+   of 'package:programmer'.
+
+   If |g:arduino_programmer| is not set, the programmer passed in will be
+   saved to disk and used when you start new vim sessions.
+
+   If passed no arguments, open a list and let the user select one from the
+   list.
 
                                                            *:ArduinoChoosePort*
 :ArduinoChoosePort [port]

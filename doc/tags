@@ -2,6 +2,7 @@
 'g:arduino_auto_baud'	arduino.txt	/*'g:arduino_auto_baud'*
 'g:arduino_board'	arduino.txt	/*'g:arduino_board'*
 'g:arduino_cmd'	arduino.txt	/*'g:arduino_cmd'*
+'g:arduino_programmer'	arduino.txt	/*'g:arduino_programmer'*
 'g:arduino_serial_baud'	arduino.txt	/*'g:arduino_serial_baud'*
 'g:arduino_serial_cmd'	arduino.txt	/*'g:arduino_serial_cmd'*
 'g:arduino_serial_port'	arduino.txt	/*'g:arduino_serial_port'*
@@ -10,6 +11,7 @@
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
 :ArduinoChoosePort	arduino.txt	/*:ArduinoChoosePort*
+:ArduinoChooseProgrammer	arduino.txt	/*:ArduinoChooseProgrammer*
 :ArduinoSerial	arduino.txt	/*:ArduinoSerial*
 :ArduinoUpload	arduino.txt	/*:ArduinoUpload*
 :ArduinoUploadAndSerial	arduino.txt	/*:ArduinoUploadAndSerial*

@@ -25,10 +25,11 @@ https://github.com/stevearc/vim-arduino/blob/master/doc/arduino.txt
 The main commands you will want to use are:
 
 * `:ArduinoChooseBoard` - Select the type of board from a list.
+* `:ArduinoChooseProgrammer` - Select the programmer from a list.
 * `:ArduinoChoosePort` - Select the serial port from a list.
 * `:ArduinoVerify` - Build the sketch.
 * `:ArduinoUpload` - Build and upload the sketch.
-* `:ArduinoSerial` - Connecto to the board for debugging over a serial port.
+* `:ArduinoSerial` - Connect to the board for debugging over a serial port.
 * `:ArduinoUploadAndSerial` - Build, upload, and connect for debugging.
 
 To make easy use of these, you may want to bind them to a key combination. You
@@ -39,6 +40,7 @@ nnoremap <buffer> <leader>am :ArduinoVerify<CR>
 nnoremap <buffer> <leader>au :ArduinoUpload<CR>
 nnoremap <buffer> <leader>ad :ArduinoUploadAndSerial<CR>
 nnoremap <buffer> <leader>ab :ArduinoChooseBoard<CR>
+nnoremap <buffer> <leader>ap :ArduinoChooseProgrammer<CR>
 ```
 
 If you want to add the board type to your status line, it's easy with the
@@ -56,7 +58,7 @@ Or if you want something a bit fancier that includes serial port info:
 ```vim
 function! b:MyStatusLine()
   let port = arduino#GetPort()
-  let line = '%f [' . g:arduino_board . '] ('
+  let line = '%f [' . g:arduino_board . '] [' . g:arduino_programmer . '] ('
   if !empty(port)
     let line = line . port . ':'
   endif

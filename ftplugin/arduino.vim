@@ -18,6 +18,7 @@ if g:arduino_auto_baud
 endif
 
 command! -buffer -bar -nargs=? ArduinoChooseBoard call arduino#ChooseBoard(<f-args>)
+command! -buffer -bar -nargs=? ArduinoChooseProgrammer call arduino#ChooseProgrammer(<f-args>)
 command! -buffer -bar ArduinoVerify call arduino#Verify()
 command! -buffer -bar ArduinoUpload call arduino#Upload()
 command! -buffer -bar ArduinoSerial call arduino#Serial()
