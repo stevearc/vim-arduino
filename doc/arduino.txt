@@ -5,7 +5,7 @@ CONTENTS                                                     *arduino-contents*
 
     1. Intro...........................................|arduino-intro|
     2. Options.........................................|arduino-options|
-    3. Commands........................................|arduino-mappings|
+    3. Commands........................................|arduino-commands|
 
 ===============================================================================
 INTRO                                                           *arduino-intro*
@@ -15,7 +15,7 @@ that integrate with the arduino IDE's commandline API. It requires the arduino
 IDE to be installed.
 
 The basic operations that are supported are compiling, uploading, and
-debugging your projects from within vim. See the |arduino-mappings| for
+debugging your projects from within vim. See the |arduino-commands| for
 details.
 
 ===============================================================================
