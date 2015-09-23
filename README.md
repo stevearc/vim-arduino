@@ -47,6 +47,7 @@ If you want to add the board type to your status line, it's easy with the
 following:
 
 ```vim
+" my_file.ino [arduino:avr:uno]
 function! b:MyStatusLine()
   return '%f [' . g:arduino_board . ']'
 endfunction
@@ -56,17 +57,18 @@ setl statusline=%!b:MyStatusLine()
 Or if you want something a bit fancier that includes serial port info:
 
 ```vim
+" my_file.ino [arduino:avr:uno] [arduino:usbtinyisp] (/dev/ttyACM0:9600)
 function! b:MyStatusLine()
   let port = arduino#GetPort()
-  let line = '%f [' . g:arduino_board . '] [' . g:arduino_programmer . '] ('
+  let line = '%f [' . g:arduino_board . '] [' . g:arduino_programmer . ']'
   if !empty(port)
-    let line = line . port . ':'
+    let line = line . ' (' . port . ':' . g:arduino_serial_baud . ')'
   endif
-  let line = line . g:arduino_serial_baud . ')'
   return line
 endfunction
 setl statusline=%!b:MyStatusLine()
 ```
+
 
 ## License
 Everything is under the [MIT
