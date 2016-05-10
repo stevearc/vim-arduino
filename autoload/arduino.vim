@@ -261,6 +261,7 @@ endfunction
 
 function! arduino#Verify()
   let cmd = arduino#GetArduinoCommand("--verify")
+  exe ":silent !echo " . cmd
   exe ":!" . cmd
   redraw!
   return v:shell_error
@@ -268,6 +269,7 @@ endfunction
 
 function! arduino#Upload()
   let cmd = arduino#GetArduinoCommand("--upload")
+  exe ":silent !echo " . cmd
   exe ":silent !" . cmd
   redraw!
   return v:shell_error
@@ -276,6 +278,7 @@ endfunction
 function! arduino#Serial()
   let cmd = arduino#GetSerialCmd()
   if empty(cmd) | return | endif
+  exe ":silent !echo " . cmd
   if !empty($TMUX) && !empty(g:arduino_serial_tmux)
     exe ":!tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
   else
