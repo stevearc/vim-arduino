@@ -391,8 +391,14 @@ function! s:CacheLine(lines, varname)
 endfunction
 
 function! arduino#GetArduinoDir()
+  if exists('g:arduino_dir')
+    return g:arduino_dir
+  endif
   let arduino_cmd = arduino#FindExecutable('arduino')
   let arduino_dir = fnamemodify(arduino_cmd, ':h')
+  if !s:FileExists(arduino_dir . '/hardware/arduino/')
+    throw "Could not find arduino directory. Please set g:arduino_dir"
+  endif
   return arduino_dir
 endfunction
 

@@ -2,6 +2,7 @@
 'g:arduino_auto_baud'	arduino.txt	/*'g:arduino_auto_baud'*
 'g:arduino_board'	arduino.txt	/*'g:arduino_board'*
 'g:arduino_cmd'	arduino.txt	/*'g:arduino_cmd'*
+'g:arduino_dir'	arduino.txt	/*'g:arduino_dir'*
 'g:arduino_programmer'	arduino.txt	/*'g:arduino_programmer'*
 'g:arduino_serial_baud'	arduino.txt	/*'g:arduino_serial_baud'*
 'g:arduino_serial_cmd'	arduino.txt	/*'g:arduino_serial_cmd'*

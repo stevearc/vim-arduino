@@ -41,6 +41,11 @@ The path to the 'arduino' command. By default it will use the
 your PATH and runs it inside Xvfb if it can. >
   let g:arduino_cmd = '/usr/share/local/arduino/arduino'
 <
+                                                             *'g:arduino_dir'*
+The path to your 'arduino' directory. Usually vim-arduino will be able to
+detect it, but if it cannot you can set the value manually.
+  let g:arduino_dir = '/usr/share/local/arduino'
+<
                                                              *'g:arduino_args'*
 Additional arguments that will be passed to the 'arduino' command during build
 and upload. See
