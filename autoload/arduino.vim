@@ -3,6 +3,12 @@ if (exists('g:loaded_arduino_autoload') && g:loaded_arduino_autoload)
 endif
 let g:loaded_arduino_autoload = 1
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
+" In neovim, run the shell commands using :terminal to preserve interactivity
+if has('nvim')
+  let s:TERM = 'terminal! '
+else
+  let s:TERM = '!'
+endif
 
 " Initialization {{{1
 " Set up all user configuration variables
@@ -262,7 +268,7 @@ endfunction
 function! arduino#Verify()
   let cmd = arduino#GetArduinoCommand("--verify")
   exe ":silent !echo " . cmd
-  exe ":!" . cmd
+  exe ":" . s:TERM . cmd
   redraw!
   return v:shell_error
 endfunction
@@ -270,7 +276,7 @@ endfunction
 function! arduino#Upload()
   let cmd = arduino#GetArduinoCommand("--upload")
   exe ":silent !echo " . cmd
-  exe ":silent !" . cmd
+  exe ":silent " . s:TERM . cmd
   redraw!
   return v:shell_error
 endfunction
@@ -280,9 +286,9 @@ function! arduino#Serial()
   if empty(cmd) | return | endif
   exe ":silent !echo " . cmd
   if !empty($TMUX) && !empty(g:arduino_serial_tmux)
-    exe ":!tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
+    exe ":" . s:TERM . "tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
   else
-    exe ":!" . cmd
+    exe ":" . s:TERM . cmd
   endif
   redraw!
 endfunction
