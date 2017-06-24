@@ -2,7 +2,12 @@ if (exists('g:loaded_arduino_autoload') && g:loaded_arduino_autoload)
 	finish
 endif
 let g:loaded_arduino_autoload = 1
+if has('win64') || has('win32') || has('win16')
+  echo "vim-arduino does not support windows :("
+  finish
+endif
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
+let s:OS = substitute(system('uname'), '\n', '', '')
 " In neovim, run the shell commands using :terminal to preserve interactivity
 if has('nvim')
   let s:TERM = 'terminal! '
@@ -42,6 +47,10 @@ function! arduino#InitializeConfig()
   if !exists('g:arduino_serial_tmux')
     let g:arduino_serial_tmux = 'split-window -d'
   endif
+  if !exists('g:arduino_run_headless')
+    let xvfbPath = substitute(system('command -v Xvfb'), "\n*$", '', '')
+    let g:arduino_run_headless = empty(xvfbPath) ? 0 : 1
+  endif
 
   if !exists('g:arduino_serial_port_globs')
     let g:arduino_serial_port_globs = ['/dev/ttyACM*',
@@ -73,12 +82,23 @@ function! arduino#SaveCache()
 endfunction
 
 " Arduino command helpers {{{1
-function! arduino#GetArduinoCommand(cmd)
+function! arduino#GetArduinoExecutable()
   if exists('g:arduino_cmd')
-    let arduino = g:arduino_cmd
+    return g:arduino_cmd
+  elseif s:OS == 'Darwin'
+    return '/Applications/Arduino.app/Contents/MacOS/Arduino'
   else
-    let arduino = s:HERE . '/bin/arduino-headless'
+    return 'arduino'
   endif
+endfunction
+
+function! arduino#GetArduinoCommand(cmd)
+  let arduino = arduino#GetArduinoExecutable()
+
+  if g:arduino_run_headless
+    let arduino = s:HERE . '/bin/run-headless ' . arduino
+  endif
+
   let cmd = arduino . ' ' . a:cmd . " --board " . g:arduino_board
   let port = arduino#GetPort()
   if !empty(port)
@@ -400,8 +420,12 @@ function! arduino#GetArduinoDir()
   if exists('g:arduino_dir')
     return g:arduino_dir
   endif
-  let arduino_cmd = arduino#FindExecutable('arduino')
+  let executable = arduino#GetArduinoExecutable()
+  let arduino_cmd = arduino#FindExecutable(executable)
   let arduino_dir = fnamemodify(arduino_cmd, ':h')
+  if s:OS == 'Darwin'
+    let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
+  endif
   if !s:FileExists(arduino_dir . '/hardware/arduino/')
     throw "Could not find arduino directory. Please set g:arduino_dir"
   endif

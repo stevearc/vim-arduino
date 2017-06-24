@@ -1,0 +1,30 @@
+#!/bin/bash -e
+# Wrapper script that will automatically use Xvfb to run a command
+declare -r XVFB="Xvfb :1 -nolisten tcp -screen :1 1280x800x24"
+
+cleanup() {
+  if [[ -n "$xvfb_proc" ]] && kill -0 $xvfb_proc; then
+    kill -9 $xvfb_proc
+  fi
+}
+
+main() {
+  # If we're using --verbose or --verbose-build, show the output of xvfb
+  local silent=1
+  for arg in $@; do
+    if [[ "$arg" == "--verbose" ]] || [[ "$arg" == "--verbose-build" ]]; then
+      silent=
+      break
+    fi
+  done
+  if [ $silent ]; then
+    $XVFB > /dev/null 2> /dev/null &
+  else
+    $XVFB &
+  fi
+  xvfb_proc="$!"
+  trap cleanup SIGINT SIGTERM EXIT
+  DISPLAY=:1 "$@"
+}
+
+main "$@"

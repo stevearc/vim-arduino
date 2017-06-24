@@ -23,8 +23,12 @@ OPTIONS                                                       *arduino-options*
 
 Overview:~
 
-  |arduino_board|................The fully-qualified name of the board.
+  |arduino_cmd|..................Path to the arduino executable
+  |arduino_dir|..................Path to the arduino install directory
+  |arduino_run_headless|.........Try to run inside Xvfb
   |arduino_args|.................Additional args to pass to 'arduino' command.
+  |arduino_board|................The fully-qualified name of the board.
+  |arduino_programmer|...........The programmer type.
   |arduino_serial_cmd|...........Command to run to attach to serial port.
   |arduino_serial_baud|..........The baud rate for the serial connection.
   |arduino_auto_baud|............Auto-detect the baud rate.
@@ -36,15 +40,19 @@ Overview:~
 Detailed descriptions and default values:~
 
                                                              *'g:arduino_cmd'*
-The path to the 'arduino' command. By default it will use the
-'arduino-headless' script in the 'bin' directory, which looks for 'arduino' in
-your PATH and runs it inside Xvfb if it can. >
+The path to the 'arduino' command. By default it will look in your PATH, or in
+Applications on Mac. >
   let g:arduino_cmd = '/usr/share/local/arduino/arduino'
 <
                                                              *'g:arduino_dir'*
 The path to your 'arduino' directory. Usually vim-arduino will be able to
-detect it, but if it cannot you can set the value manually.
+detect it, but if it cannot you can set the value manually. >
   let g:arduino_dir = '/usr/share/local/arduino'
+<
+                                                    *'g:arduino_run_headless'*
+Run the arduino command inside a Xvfb. Requires Xvfb to be installed and in the
+PATH. >
+  let g:arduino_run_headless = 1
 <
                                                              *'g:arduino_args'*
 Additional arguments that will be passed to the 'arduino' command during build

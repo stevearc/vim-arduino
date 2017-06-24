@@ -48,17 +48,17 @@ following:
 
 ```vim
 " my_file.ino [arduino:avr:uno]
-function! b:MyStatusLine()
+function! MyStatusLine()
   return '%f [' . g:arduino_board . ']'
 endfunction
-setl statusline=%!b:MyStatusLine()
+setl statusline=%!MyStatusLine()
 ```
 
 Or if you want something a bit fancier that includes serial port info:
 
 ```vim
 " my_file.ino [arduino:avr:uno] [arduino:usbtinyisp] (/dev/ttyACM0:9600)
-function! b:MyStatusLine()
+function! MyStatusLine()
   let port = arduino#GetPort()
   let line = '%f [' . g:arduino_board . '] [' . g:arduino_programmer . ']'
   if !empty(port)
@@ -66,7 +66,7 @@ function! b:MyStatusLine()
   endif
   return line
 endfunction
-setl statusline=%!b:MyStatusLine()
+setl statusline=%!MyStatusLine()
 ```
 
 
