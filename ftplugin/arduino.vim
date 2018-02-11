@@ -14,7 +14,7 @@ setl cindent
 call arduino#RebuildMakePrg()
 
 if g:arduino_auto_baud
-  au BufReadPost,BufWritePost *.ino,*.pde call arduino#SetAutoBaud()
+  au BufReadPost,BufWritePost *.ino call arduino#SetAutoBaud()
 endif
 
 command! -buffer -bar -nargs=? ArduinoChooseBoard call arduino#ChooseBoard(<f-args>)

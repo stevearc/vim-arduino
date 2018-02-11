@@ -1,1 +1,1 @@
-au BufRead,BufNewFile *.ino,*.pde setlocal ft=arduino
+au BufRead,BufNewFile *.ino setlocal ft=arduino
