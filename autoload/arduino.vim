@@ -10,8 +10,12 @@ let s:HERE = resolve(expand('<sfile>:p:h:h'))
 let s:OS = substitute(system('uname'), '\n', '', '')
 " In neovim, run the shell commands using :terminal to preserve interactivity
 if has('nvim')
+  let s:TERM = 'botright split | terminal! '
+elseif has('terminal')
+  " In vim, doing terminal! will automatically open in a new split
   let s:TERM = 'terminal! '
 else
+  " Backwards compatible with old versions of vim
   let s:TERM = '!'
 endif
 
@@ -48,8 +52,7 @@ function! arduino#InitializeConfig()
     let g:arduino_serial_tmux = 'split-window -d'
   endif
   if !exists('g:arduino_run_headless')
-    let xvfbPath = substitute(system('command -v Xvfb'), "\n*$", '', '')
-    let g:arduino_run_headless = empty(xvfbPath) ? 0 : 1
+    let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
   endif
 
   if !exists('g:arduino_serial_port_globs')
@@ -288,30 +291,24 @@ endfunction
 
 function! arduino#Verify()
   let cmd = arduino#GetArduinoCommand("--verify")
-  exe ":silent !echo " . cmd
-  exe ":" . s:TERM . cmd
-  redraw!
+  exe s:TERM . cmd
   return v:shell_error
 endfunction
 
 function! arduino#Upload()
   let cmd = arduino#GetArduinoCommand("--upload")
-  exe ":silent !echo " . cmd
-  exe ":silent " . s:TERM . cmd
-  redraw!
+  exe s:TERM . cmd
   return v:shell_error
 endfunction
 
 function! arduino#Serial()
   let cmd = arduino#GetSerialCmd()
   if empty(cmd) | return | endif
-  exe ":silent !echo " . cmd
   if !empty($TMUX) && !empty(g:arduino_serial_tmux)
-    exe ":" . s:TERM . "tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
+    exe s:TERM . "tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
   else
-    exe ":" . s:TERM . cmd
+    exe s:TERM . cmd
   endif
-  redraw!
 endfunction
 
 function! arduino#UploadAndSerial()
