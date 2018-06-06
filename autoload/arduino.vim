@@ -111,7 +111,7 @@ function! arduino#GetArduinoCommand(cmd)
   if !empty(g:arduino_programmer)
     let cmd = cmd . " --pref programmer=" . g:arduino_programmer
   endif
-  let cmd = cmd . " " . g:arduino_args . " " . expand('%')
+  let cmd = cmd . " " . g:arduino_args . " " . expand('%:p')
   return cmd
 endfunction
 
