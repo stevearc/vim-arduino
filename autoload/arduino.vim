@@ -184,18 +184,33 @@ endfunction
 function! arduino#GetProgrammers()
   let arduino_dir = arduino#GetArduinoDir()
   let programmers = []
-  for filename in split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
-    let pieces = split(filename, '/')
-    let package = pieces[-3]
-    let lines = readfile(filename)
-    for line in lines
-      if line =~? '^[^.]*\.name=.*$'
-        let linesplit = split(line, '\.')
-        let programmer = linesplit[0]
-        call add(programmers, package . ':' . programmer)
-      endif
+  if arduino#GetArduinoUserInstallation() == 1
+    for filename in split(globpath(arduino_dir . '/packages', '**/programmers.txt'), '\n')
+      let pieces = split(filename, '/')
+      let package = pieces[-5]
+      let lines = readfile(filename)
+      for line in lines
+        if line =~? '^[^.]*\.name=.*$'
+          let linesplit = split(line, '\.')
+          let programmer = linesplit[0]
+          call add(programmers, package . ':' . programmer)
+        endif
+      endfor
     endfor
-  endfor
+  else
+    for filename in split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
+      let pieces = split(filename, '/')
+      let package = pieces[-3]
+      let lines = readfile(filename)
+      for line in lines
+        if line =~? '^[^.]*\.name=.*$'
+          let linesplit = split(line, '\.')
+          let programmer = linesplit[0]
+          call add(programmers, package . ':' . programmer)
+        endif
+      endfor
+    endfor
+  endif
   return sort(programmers)
 endfunction
 
