@@ -54,6 +54,9 @@ function! arduino#InitializeConfig()
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
   endif
+  if !exists('g:arduino_user_installation')
+    let g:arduino_user_installation = 0
+  endif
 
   if !exists('g:arduino_serial_port_globs')
     let g:arduino_serial_port_globs = ['/dev/ttyACM*',
@@ -118,19 +121,36 @@ endfunction
 function! arduino#GetBoards()
   let arduino_dir = arduino#GetArduinoDir()
   let boards = []
-  for filename in split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
-    let pieces = split(filename, '/')
-    let package = pieces[-3]
-    let arch = pieces[-2]
-    let lines = readfile(filename)
-    for line in lines
-      if line =~? '^[^.]*\.build\.board=.*$'
-        let linesplit = split(line, '\.')
-        let board = linesplit[0]
-        call add(boards, package . ':' . arch . ':' . board)
-      endif
+  if arduino#GetArduinoUserInstallation() == 1
+    for filename in split(globpath(arduino_dir . '/packages', '**/boards.txt'), '\n')
+      let pieces = split(filename, '/')
+      let package = pieces[-5]
+      let arch = pieces[-3]
+      let package_version = pieces[-2]
+      let lines = readfile(filename)
+      for line in lines
+        if line =~? '^[^.]*\.build\.board=.*$'
+          let linesplit = split(line, '\.')
+          let board = linesplit[0]
+          call add(boards, package . ':' . arch . ':' . board . ':' . package_version)
+        endif
+      endfor
     endfor
-  endfor
+  else
+    for filename in split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
+      let pieces = split(filename, '/')
+      let package = pieces[-3]
+      let arch = pieces[-2]
+      let lines = readfile(filename)
+      for line in lines
+        if line =~? '^[^.]*\.build\.board=.*$'
+          let linesplit = split(line, '\.')
+          let board = linesplit[0]
+          call add(boards, package . ':' . arch . ':' . board)
+        endif
+      endfor
+    endfor
+  endif
   return boards
 endfunction
 
@@ -139,6 +159,10 @@ function! arduino#GetBoardOptions(board)
   let board_pieces = split(a:board, ':')
   let filename = arduino_dir . '/hardware/' . board_pieces[0] .
         \        '/' . board_pieces[1] . '/boards.txt'
+  if !filereadable(filename)
+    let filename = arduino_dir . '/packages/' . board_pieces[0] .
+                \ '/hardware/' . board_pieces[1] . '/' . board_pieces[3] . '/boards.txt'
+  endif
   let lines = readfile(filename)
   let pattern = '^' . board_pieces[2] . '\.menu\.\([^.]*\)\.\([^.]*\)='
   let options = {}
@@ -222,9 +246,15 @@ endfunction
 " Callback from board selection. Sets the board and prompts for any options
 function! arduino#SelectBoard(board)
   let options = arduino#GetBoardOptions(a:board)
-  call arduino#SetBoard(a:board)
+  let board_pieces = split(a:board, ':')
+  if len(board_pieces) == 4
+    let board = board_pieces[0] . ':' . board_pieces[1] . ':' . board_pieces[2]
+  else
+    let board = a:board
+  endif
+  call arduino#SetBoard(board)
   let s:callback_data = {
-        \ 'board': a:board,
+        \ 'board': board,
         \ 'available_opts': options,
         \ 'opts': {},
         \ 'active_option': '',
@@ -418,16 +448,29 @@ function! arduino#GetArduinoDir()
   if exists('g:arduino_dir')
     return g:arduino_dir
   endif
-  let executable = arduino#GetArduinoExecutable()
-  let arduino_cmd = arduino#FindExecutable(executable)
-  let arduino_dir = fnamemodify(arduino_cmd, ':h')
-  if s:OS == 'Darwin'
-    let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
-  endif
-  if !s:FileExists(arduino_dir . '/hardware/arduino/')
-    throw "Could not find arduino directory. Please set g:arduino_dir"
+  if arduino#GetArduinoUserInstallation() == 1
+    let arduino_dir = $HOME . '/.arduino15'
+    if !s:FileExists(arduino_dir)
+      throw "Could not find arduino directory. Please set g:arduino_dir"
+    endif
+  else
+    let executable = arduino#GetArduinoExecutable()
+    let arduino_cmd = arduino#FindExecutable(executable)
+    let arduino_dir = fnamemodify(arduino_cmd, ':h')
+    if s:OS == 'Darwin'
+      let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
+    endif
+    if !s:FileExists(arduino_dir . '/hardware/arduino/')
+      throw "Could not find arduino directory. Please set g:arduino_dir"
+    endif
   endif
   return arduino_dir
+endfunction
+
+function! arduino#GetArduinoUserInstallation()
+  if exists('g:arduino_user_installation')
+    return g:arduino_user_installation
+  endif
 endfunction
 
 " Ctrlp extension {{{1
