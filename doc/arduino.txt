@@ -116,7 +116,7 @@ Set this variable to 1 if you want to use the the arduino user folder normally
 located under ~/.arduino15.
 If you're using a non default path you also have to set 'g:arduino_dir'. >
   let g:arduino_user_installation = 0
- 
+< 
 
 ===============================================================================
 COMMANDS                                                     *arduino-commands*

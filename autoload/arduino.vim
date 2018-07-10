@@ -8,6 +8,7 @@ if has('win64') || has('win32') || has('win16')
 endif
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
 let s:OS = substitute(system('uname'), '\n', '', '')
+let s:ARDUINO_USER_DIR = $HOME . "/.arduino15"
 " In neovim, run the shell commands using :terminal to preserve interactivity
 if has('nvim')
   let s:TERM = 'botright split | terminal! '
@@ -55,7 +56,11 @@ function! arduino#InitializeConfig()
     let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
   endif
   if !exists('g:arduino_user_installation')
-    let g:arduino_user_installation = 0
+    if s:FileExists(s:ARDUINO_USER_DIR)
+      let g:arduino_user_installation = 1
+    else
+      let g:arduino_user_installation = 0
+    endif
   endif
 
   if !exists('g:arduino_serial_port_globs')
@@ -118,38 +123,41 @@ function! arduino#GetArduinoCommand(cmd)
   return cmd
 endfunction
 
-function! arduino#GetBoards()
-  let arduino_dir = arduino#GetArduinoDir()
+function! arduino#GetSubBoards(dir, subdir)
   let boards = []
-  if arduino#GetArduinoUserInstallation() == 1
-    for filename in split(globpath(arduino_dir . '/packages', '**/boards.txt'), '\n')
-      let pieces = split(filename, '/')
+  for filename in split(globpath(a:dir . '/' . a:subdir, '**/boards.txt'), '\n')
+    let pieces = split(filename, '/')
+    if len(pieces) == 9
       let package = pieces[-5]
       let arch = pieces[-3]
       let package_version = pieces[-2]
-      let lines = readfile(filename)
-      for line in lines
-        if line =~? '^[^.]*\.build\.board=.*$'
-          let linesplit = split(line, '\.')
-          let board = linesplit[0]
-          call add(boards, package . ':' . arch . ':' . board . ':' . package_version)
-        endif
-      endfor
-    endfor
-  else
-    for filename in split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
-      let pieces = split(filename, '/')
+    else
       let package = pieces[-3]
       let arch = pieces[-2]
-      let lines = readfile(filename)
-      for line in lines
-        if line =~? '^[^.]*\.build\.board=.*$'
-          let linesplit = split(line, '\.')
-          let board = linesplit[0]
+    endif
+
+    let lines = readfile(filename)
+    for line in lines
+      if line =~? '^[^.]*\.build\.board=.*$'
+        let linesplit = split(line, '\.')
+        let board = linesplit[0]
+        if exists('package_version')
+          call add(boards, package . ':' . arch . ':' . board . ':' . package_version)
+        else
           call add(boards, package . ':' . arch . ':' . board)
         endif
-      endfor
+      endif
     endfor
+  endfor
+  return boards
+endfunction
+ 
+function! arduino#GetBoards()
+  let arduino_dir = arduino#GetArduinoDir()
+  if arduino#GetArduinoUserInstallation() == 1
+    let boards = arduino#GetSubBoards(arduino_dir, 'packages')
+  else
+    let boards = arduino#GetSubBoards(arduino_dir, 'hardware')
   endif
   return boards
 endfunction
@@ -181,35 +189,33 @@ function! arduino#GetBoardOptions(board)
   return options
 endfunction
 
+function! arduino#GetSubProgrammers(dir, subdir)
+  let programmers = []
+  for filename in split(globpath(a:dir . '/' . a:subdir, '**/programmers.txt'), '\n')
+    let pieces = split(filename, '/')
+    if len(pieces) == 9
+      let package = pieces[-5]
+    else
+      let package = pieces[-3]
+    endif
+    let lines = readfile(filename)
+    for line in lines
+      if line =~? '^[^.]*\.name=.*$'
+        let linesplit = split(line, '\.')
+        let programmer = linesplit[0]
+        call add(programmers, package . ':' . programmer)
+      endif
+    endfor
+  endfor
+  return programmers
+endfunction
+
 function! arduino#GetProgrammers()
   let arduino_dir = arduino#GetArduinoDir()
-  let programmers = []
   if arduino#GetArduinoUserInstallation() == 1
-    for filename in split(globpath(arduino_dir . '/packages', '**/programmers.txt'), '\n')
-      let pieces = split(filename, '/')
-      let package = pieces[-5]
-      let lines = readfile(filename)
-      for line in lines
-        if line =~? '^[^.]*\.name=.*$'
-          let linesplit = split(line, '\.')
-          let programmer = linesplit[0]
-          call add(programmers, package . ':' . programmer)
-        endif
-      endfor
-    endfor
+    let programmers = arduino#GetSubProgrammers(arduino_dir, 'packages')
   else
-    for filename in split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
-      let pieces = split(filename, '/')
-      let package = pieces[-3]
-      let lines = readfile(filename)
-      for line in lines
-        if line =~? '^[^.]*\.name=.*$'
-          let linesplit = split(line, '\.')
-          let programmer = linesplit[0]
-          call add(programmers, package . ':' . programmer)
-        endif
-      endfor
-    endfor
+    let programmers = arduino#GetSubProgrammers(arduino_dir, 'hardware')
   endif
   return sort(programmers)
 endfunction
