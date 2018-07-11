@@ -8,6 +8,7 @@ if has('win64') || has('win32') || has('win16')
 endif
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
 let s:OS = substitute(system('uname'), '\n', '', '')
+let s:ARDUINO_USER_DIR = $HOME . "/.arduino15"
 " In neovim, run the shell commands using :terminal to preserve interactivity
 if has('nvim')
   let s:TERM = 'botright split | terminal! '
@@ -53,6 +54,13 @@ function! arduino#InitializeConfig()
   endif
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
+  endif
+  if !exists('g:arduino_user_installation')
+    if s:FileExists(s:ARDUINO_USER_DIR)
+      let g:arduino_user_installation = 1
+    else
+      let g:arduino_user_installation = 0
+    endif
   endif
 
   if !exists('g:arduino_serial_port_globs')
@@ -115,22 +123,42 @@ function! arduino#GetArduinoCommand(cmd)
   return cmd
 endfunction
 
-function! arduino#GetBoards()
-  let arduino_dir = arduino#GetArduinoDir()
+function! arduino#GetSubBoards(dir, subdir)
   let boards = []
-  for filename in split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
+  for filename in split(globpath(a:dir . '/' . a:subdir, '**/boards.txt'), '\n')
     let pieces = split(filename, '/')
-    let package = pieces[-3]
-    let arch = pieces[-2]
+    if len(pieces) == 9
+      let package = pieces[-5]
+      let arch = pieces[-3]
+      let package_version = pieces[-2]
+    else
+      let package = pieces[-3]
+      let arch = pieces[-2]
+    endif
+
     let lines = readfile(filename)
     for line in lines
       if line =~? '^[^.]*\.build\.board=.*$'
         let linesplit = split(line, '\.')
         let board = linesplit[0]
-        call add(boards, package . ':' . arch . ':' . board)
+        if exists('package_version')
+          call add(boards, package . ':' . arch . ':' . board . ':' . package_version)
+        else
+          call add(boards, package . ':' . arch . ':' . board)
+        endif
       endif
     endfor
   endfor
+  return boards
+endfunction
+ 
+function! arduino#GetBoards()
+  let arduino_dir = arduino#GetArduinoDir()
+  if arduino#GetArduinoUserInstallation() == 1
+    let boards = arduino#GetSubBoards(arduino_dir, 'packages')
+  else
+    let boards = arduino#GetSubBoards(arduino_dir, 'hardware')
+  endif
   return boards
 endfunction
 
@@ -139,6 +167,10 @@ function! arduino#GetBoardOptions(board)
   let board_pieces = split(a:board, ':')
   let filename = arduino_dir . '/hardware/' . board_pieces[0] .
         \        '/' . board_pieces[1] . '/boards.txt'
+  if !filereadable(filename)
+    let filename = arduino_dir . '/packages/' . board_pieces[0] .
+                \ '/hardware/' . board_pieces[1] . '/' . board_pieces[3] . '/boards.txt'
+  endif
   let lines = readfile(filename)
   let pattern = '^' . board_pieces[2] . '\.menu\.\([^.]*\)\.\([^.]*\)='
   let options = {}
@@ -157,12 +189,15 @@ function! arduino#GetBoardOptions(board)
   return options
 endfunction
 
-function! arduino#GetProgrammers()
-  let arduino_dir = arduino#GetArduinoDir()
+function! arduino#GetSubProgrammers(dir, subdir)
   let programmers = []
-  for filename in split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
+  for filename in split(globpath(a:dir . '/' . a:subdir, '**/programmers.txt'), '\n')
     let pieces = split(filename, '/')
-    let package = pieces[-3]
+    if len(pieces) == 9
+      let package = pieces[-5]
+    else
+      let package = pieces[-3]
+    endif
     let lines = readfile(filename)
     for line in lines
       if line =~? '^[^.]*\.name=.*$'
@@ -172,6 +207,16 @@ function! arduino#GetProgrammers()
       endif
     endfor
   endfor
+  return programmers
+endfunction
+
+function! arduino#GetProgrammers()
+  let arduino_dir = arduino#GetArduinoDir()
+  if arduino#GetArduinoUserInstallation() == 1
+    let programmers = arduino#GetSubProgrammers(arduino_dir, 'packages')
+  else
+    let programmers = arduino#GetSubProgrammers(arduino_dir, 'hardware')
+  endif
   return sort(programmers)
 endfunction
 
@@ -222,9 +267,15 @@ endfunction
 " Callback from board selection. Sets the board and prompts for any options
 function! arduino#SelectBoard(board)
   let options = arduino#GetBoardOptions(a:board)
-  call arduino#SetBoard(a:board)
+  let board_pieces = split(a:board, ':')
+  if len(board_pieces) == 4
+    let board = board_pieces[0] . ':' . board_pieces[1] . ':' . board_pieces[2]
+  else
+    let board = a:board
+  endif
+  call arduino#SetBoard(board)
   let s:callback_data = {
-        \ 'board': a:board,
+        \ 'board': board,
         \ 'available_opts': options,
         \ 'opts': {},
         \ 'active_option': '',
@@ -418,16 +469,29 @@ function! arduino#GetArduinoDir()
   if exists('g:arduino_dir')
     return g:arduino_dir
   endif
-  let executable = arduino#GetArduinoExecutable()
-  let arduino_cmd = arduino#FindExecutable(executable)
-  let arduino_dir = fnamemodify(arduino_cmd, ':h')
-  if s:OS == 'Darwin'
-    let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
-  endif
-  if !s:FileExists(arduino_dir . '/hardware/arduino/')
-    throw "Could not find arduino directory. Please set g:arduino_dir"
+  if arduino#GetArduinoUserInstallation() == 1
+    let arduino_dir = $HOME . '/.arduino15'
+    if !s:FileExists(arduino_dir)
+      throw "Could not find arduino directory. Please set g:arduino_dir"
+    endif
+  else
+    let executable = arduino#GetArduinoExecutable()
+    let arduino_cmd = arduino#FindExecutable(executable)
+    let arduino_dir = fnamemodify(arduino_cmd, ':h')
+    if s:OS == 'Darwin'
+      let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
+    endif
+    if !s:FileExists(arduino_dir . '/hardware/arduino/')
+      throw "Could not find arduino directory. Please set g:arduino_dir"
+    endif
   endif
   return arduino_dir
+endfunction
+
+function! arduino#GetArduinoUserInstallation()
+  if exists('g:arduino_user_installation')
+    return g:arduino_user_installation
+  endif
 endfunction
 
 " Ctrlp extension {{{1

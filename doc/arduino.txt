@@ -35,6 +35,7 @@ Overview:~
   |arduino_serial_tmux|..........Tmux command to open serial debugger.
   |arduino_serial_port|..........Location of the serial port.
   |arduino_serial_port_globs|....Globs to auto-search for serial port.
+  |arduino_user_installation|....Use user installation of arduino ide.
 
 -------------------------------------------------------------------------------
 Detailed descriptions and default values:~
@@ -109,6 +110,13 @@ Search these patterns to find a likely serial port to upload to. >
                                     \'/dev/tty.usbmodem*',
                                     \'/dev/tty.usbserial*']
 <
+
+                                               *'g:arduino_user_installation'*
+Set this variable to 1 if you want to use the the arduino user folder normally
+located under ~/.arduino15.
+If you're using a non default path you also have to set 'g:arduino_dir'. >
+  let g:arduino_user_installation = 0
+< 
 
 ===============================================================================
 COMMANDS                                                     *arduino-commands*
