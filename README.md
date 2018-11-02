@@ -68,7 +68,12 @@ function! MyStatusLine()
 endfunction
 setl statusline=%!MyStatusLine()
 ```
+Note: if you are using the 'airline' plugin for the status line, you can display
+this custom status part instead of the filename extension with:
 
+```vim
+let g:airline_section_x='%{MyStatusLine()}'
+```
 
 ## License
 Everything is under the [MIT

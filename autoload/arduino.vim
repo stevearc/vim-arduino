@@ -1,5 +1,5 @@
 if (exists('g:loaded_arduino_autoload') && g:loaded_arduino_autoload)
-	finish
+    finish
 endif
 let g:loaded_arduino_autoload = 1
 if has('win64') || has('win32') || has('win16')
@@ -21,7 +21,7 @@ endif
 
 " Initialization {{{1
 " Set up all user configuration variables
-function! arduino#InitializeConfig()
+function! arduino#InitializeConfig() abort
   if !exists('g:arduino_board')
     if exists('g:_cache_arduino_board')
       let g:arduino_board = g:_cache_arduino_board
@@ -66,7 +66,7 @@ endfunction
 
 " Caching {{{1
 " Load the saved defaults
-function! arduino#LoadCache()
+function! arduino#LoadCache() abort
   let s:cache_dir = exists('$XDG_CACHE_HOME') ? $XDG_CACHE_HOME : $HOME . '/.cache'
   let s:cache = s:cache_dir . '/arduino_cache.vim'
   if s:FileExists(s:cache)
@@ -75,7 +75,7 @@ function! arduino#LoadCache()
 endfunction
 
 " Save settings to a source-able cache file
-function! arduino#SaveCache()
+function! arduino#SaveCache() abort
   if !s:FileExists(s:cache_dir)
     call mkdir(s:cache_dir, 'p')
   endif
@@ -86,7 +86,7 @@ function! arduino#SaveCache()
 endfunction
 
 " Arduino command helpers {{{1
-function! arduino#GetArduinoExecutable()
+function! arduino#GetArduinoExecutable() abort
   if exists('g:arduino_cmd')
     return g:arduino_cmd
   elseif s:OS == 'Darwin'
@@ -96,7 +96,7 @@ function! arduino#GetArduinoExecutable()
   endif
 endfunction
 
-function! arduino#GetArduinoCommand(cmd)
+function! arduino#GetArduinoCommand(cmd) abort
   let arduino = arduino#GetArduinoExecutable()
 
   if g:arduino_run_headless
@@ -115,71 +115,115 @@ function! arduino#GetArduinoCommand(cmd)
   return cmd
 endfunction
 
-function! arduino#GetBoards()
+function! arduino#GetBoards() abort
   let arduino_dir = arduino#GetArduinoDir()
+  let arduino_home_dir = arduino#GetArduinoHomeDir()
   let boards = []
-  for filename in split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
-    let pieces = split(filename, '/')
-    let package = pieces[-3]
-    let arch = pieces[-2]
+  let filenames = split(globpath(arduino_home_dir . '/packages/*/hardware', '**/boards.txt'), '\n')
+  let filenames += split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
+  for filename in filenames
+    " The directory tree is different in the home
+    if filename =~? "^".arduino_home_dir
+        let pieces = split(filename, '/hardware/')
+        let piecesl = split(pieces[0], '/')
+        let piecesr = split(pieces[1], '/')
+        let package = piecesl[-1]
+        let arch = piecesr[0]
+    else
+        let pieces = split(filename, '/')
+        let package = pieces[-3]
+        let arch = pieces[-2]
+    endif
     let lines = readfile(filename)
     for line in lines
-      if line =~? '^[^.]*\.build\.board=.*$'
+      if line =~? '^[^.]*\.name=.*$'
         let linesplit = split(line, '\.')
         let board = linesplit[0]
-        call add(boards, package . ':' . arch . ':' . board)
+        let linesplit = split(line, '=')
+        let name = linesplit[1]
+        let board = package . ':' . arch . ':' . board
+        if index(boards, board) == -1
+          call add(boards, board)
+        endif
       endif
     endfor
   endfor
   return boards
 endfunction
 
-function! arduino#GetBoardOptions(board)
+function! arduino#GetBoardOptions(board) abort
   let arduino_dir = arduino#GetArduinoDir()
+  let arduino_home_dir = arduino#GetArduinoHomeDir()
   let board_pieces = split(a:board, ':')
-  let filename = arduino_dir . '/hardware/' . board_pieces[0] .
-        \        '/' . board_pieces[1] . '/boards.txt'
-  let lines = readfile(filename)
-  let pattern = '^' . board_pieces[2] . '\.menu\.\([^.]*\)\.\([^.]*\)='
-  let options = {}
-  for line in lines
-    if line =~? pattern
-      let groups = matchlist(line, pattern)
-      let option = groups[1]
-      let value = groups[2]
-      if !has_key(options, option)
-        exec 'let options.' . option . ' = []'
+  " The board can be defined system wide or in the home directory
+  let filenames = [arduino_dir . '/hardware/' . board_pieces[0] .
+        \           '/' . board_pieces[1] . '/boards.txt']
+  let filenames += split(globpath(
+        \ arduino_home_dir . '/packages/' . board_pieces[0] . '/hardware/' . board_pieces[1],
+        \ '**/boards.txt'), '\n')
+  for filename in filenames
+    if !filereadable(filename)
+      continue
+    endif
+    let lines = readfile(filename)
+    let pattern = '^' . board_pieces[2] . '\.menu\.\([^.]*\)\.\([^.]*\)='
+    let options = {}
+    let matched = 0
+    for line in lines
+      if line =~? pattern
+        let matched = 1
+        let groups = matchlist(line, pattern)
+        let option = groups[1]
+        let value = groups[2]
+        if !has_key(options, option)
+          let options[option] = []
+        endif
+        let optlist = get(options, option)
+        call add(optlist, value)
       endif
-      let optlist = get(options, option)
-      call add(optlist, value)
+    endfor
+    if matched
+      return options
     endif
   endfor
-  return options
+  return {}
 endfunction
 
-function! arduino#GetProgrammers()
+function! arduino#GetProgrammers() abort
   let arduino_dir = arduino#GetArduinoDir()
+  let arduino_home_dir = arduino#GetArduinoHomeDir()
   let programmers = []
-  for filename in split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
+  let filenames = split(globpath(arduino_home_dir . '/packages/*/hardware', '**/programmers.txt'), '\n')
+  let filenames += split(globpath(arduino_dir . '/hardware', '**/programmers.txt'), '\n')
+  for filename in filenames
     let pieces = split(filename, '/')
-    let package = pieces[-3]
+    " The directory tree is different in the home
+    if filename =~? "^".arduino_home_dir
+      let package = pieces[-5]
+    else
+      let package = pieces[-3]
+      continue
+    endif
     let lines = readfile(filename)
     for line in lines
       if line =~? '^[^.]*\.name=.*$'
         let linesplit = split(line, '\.')
         let programmer = linesplit[0]
-        call add(programmers, package . ':' . programmer)
+        let prog = package . ':' . programmer
+        if index(programmers, prog) == -1
+          call add(programmers, prog)
+        endif
       endif
     endfor
   endfor
   return sort(programmers)
 endfunction
 
-function! arduino#RebuildMakePrg()
+function! arduino#RebuildMakePrg() abort
   let &l:makeprg = arduino#GetArduinoCommand("--verify")
 endfunction
 
-function! s:BoardOrder(b1, b2)
+function! s:BoardOrder(b1, b2) abort
   let c1 = split(a:b1, ':')[2]
   let c2 = split(a:b2, ':')[2]
   return c1 == c2 ? 0 : c1 > c2 ? 1 : -1
@@ -187,7 +231,7 @@ endfunction
 
 " Port selection {{{2
 
-function! arduino#ChoosePort(...)
+function! arduino#ChoosePort(...) abort
   if a:0
     let g:arduino_serial_port = a:1
     return
@@ -200,7 +244,7 @@ function! arduino#ChoosePort(...)
   endif
 endfunction
 
-function! arduino#SelectPort(port)
+function! arduino#SelectPort(port) abort
   let g:arduino_serial_port = a:port
 endfunction
 
@@ -209,7 +253,7 @@ endfunction
 let s:callback_data = {}
 
 " Display a list of boards to the user and allow them to choose the active one
-function! arduino#ChooseBoard(...)
+function! arduino#ChooseBoard(...) abort
   if a:0
     call arduino#SetBoard(a:1)
     return
@@ -220,7 +264,7 @@ function! arduino#ChooseBoard(...)
 endfunction
 
 " Callback from board selection. Sets the board and prompts for any options
-function! arduino#SelectBoard(board)
+function! arduino#SelectBoard(board) abort
   let options = arduino#GetBoardOptions(a:board)
   call arduino#SetBoard(a:board)
   let s:callback_data = {
@@ -233,7 +277,7 @@ function! arduino#SelectBoard(board)
 endfunction
 
 " Prompt user for the next unselected board option
-function! arduino#ChooseBoardOption()
+function! arduino#ChooseBoardOption() abort
   let available_opts = s:callback_data.available_opts
   for opt in keys(available_opts)
     if !has_key(s:callback_data.opts, opt)
@@ -245,7 +289,7 @@ function! arduino#ChooseBoardOption()
 endfunction
 
 " Callback from option selection
-function! arduino#SelectOption(value)
+function! arduino#SelectOption(value) abort
   let opt = s:callback_data.active_option
   let s:callback_data.opts[opt] = a:value
   call arduino#SetBoard(s:callback_data.board, s:callback_data.opts)
@@ -254,7 +298,7 @@ endfunction
 
 " Programmer selection {{{2
 
-function! arduino#ChooseProgrammer(...)
+function! arduino#ChooseProgrammer(...) abort
   if a:0
     call arduino#SetProgrammer(a:1)
     return
@@ -263,7 +307,7 @@ function! arduino#ChooseProgrammer(...)
   call arduino#Choose('Arduino Programmer', programmers, 'arduino#SetProgrammer')
 endfunction
 
-function! arduino#SetProgrammer(programmer)
+function! arduino#SetProgrammer(programmer) abort
   let g:_cache_arduino_programmer = a:programmer
   let g:arduino_programmer = a:programmer
   call arduino#RebuildMakePrg()
@@ -273,7 +317,7 @@ endfunction
 " Command functions {{{2
 
 " Set the active board
-function! arduino#SetBoard(board, ...)
+function! arduino#SetBoard(board, ...) abort
   let board = a:board
   if a:0
     let options = a:1
@@ -289,19 +333,19 @@ function! arduino#SetBoard(board, ...)
   call arduino#SaveCache()
 endfunction
 
-function! arduino#Verify()
+function! arduino#Verify() abort
   let cmd = arduino#GetArduinoCommand("--verify")
   exe s:TERM . cmd
   return v:shell_error
 endfunction
 
-function! arduino#Upload()
+function! arduino#Upload() abort
   let cmd = arduino#GetArduinoCommand("--upload")
   exe s:TERM . cmd
   return v:shell_error
 endfunction
 
-function! arduino#Serial()
+function! arduino#Serial() abort
   let cmd = arduino#GetSerialCmd()
   if empty(cmd) | return | endif
   if !empty($TMUX) && !empty(g:arduino_serial_tmux)
@@ -311,7 +355,7 @@ function! arduino#Serial()
   endif
 endfunction
 
-function! arduino#UploadAndSerial()
+function! arduino#UploadAndSerial() abort
   let ret = arduino#Upload()
   if ret == 0
     call arduino#Serial()
@@ -320,7 +364,7 @@ endfunction
 
 " Serial helpers {{{2
 
-function! arduino#GetSerialCmd()
+function! arduino#GetSerialCmd() abort
   let port = arduino#GetPort()
   if empty(port)
     echoerr "Error! No serial port found"
@@ -331,7 +375,7 @@ function! arduino#GetSerialCmd()
   return l:cmd
 endfunction
 
-function! arduino#SetAutoBaud()
+function! arduino#SetAutoBaud() abort
   let n = 1
   while n < line("$")
     let match = matchlist(getline(n), 'Serial[0-9]*\.begin(\([0-9]*\)')
@@ -343,7 +387,7 @@ function! arduino#SetAutoBaud()
   endwhile
 endfunction
 
-function! arduino#GetPorts()
+function! arduino#GetPorts() abort
   let ports = []
   for l:glob in g:arduino_serial_port_globs
     let found = glob(l:glob, 1, 1)
@@ -354,7 +398,7 @@ function! arduino#GetPorts()
   return ports
 endfunction
 
-function! arduino#GuessSerialPort()
+function! arduino#GuessSerialPort() abort
   let ports = arduino#GetPorts()
   if empty(ports)
     return 0
@@ -363,7 +407,7 @@ function! arduino#GuessSerialPort()
   endif
 endfunction
 
-function! arduino#GetPort()
+function! arduino#GetPort() abort
   if exists('g:arduino_serial_port')
     return g:arduino_serial_port
   else
@@ -375,7 +419,7 @@ endfunction
 
 " Utility functions {{{1
 
-function! arduino#Choose(title, items, callback)
+function! arduino#Choose(title, items, callback) abort
   if g:arduino_ctrlp_enabled
     let ext_data = get(g:ctrlp_ext_vars, s:ctrlp_idx)
     let ext_data.lname = a:title
@@ -386,7 +430,11 @@ function! arduino#Choose(title, items, callback)
     let labels = ["   " . a:title]
     let idx = 1
     for item in a:items
-      call add(labels, idx . ") " . item)
+      if idx<10
+        call add(labels, " " . idx . ") " . item)
+      else
+        call add(labels, idx . ") " . item)
+      endif
       let idx += 1
     endfor
     let choice = inputlist(labels)
@@ -396,25 +444,25 @@ function! arduino#Choose(title, items, callback)
   endif
 endfunction
 
-function! arduino#FindExecutable(name)
+function! arduino#FindExecutable(name) abort
   let path = substitute(system('command -v ' . a:name), "\n*$", '', '')
   if empty(path) | return 0 | endif
   let abspath = resolve(path)
   return abspath
 endfunction
 
-function! s:FileExists(path)
+function! s:FileExists(path) abort
   return !empty(glob(a:path))
 endfunction
 
-function! s:CacheLine(lines, varname)
+function! s:CacheLine(lines, varname) abort
   if exists(a:varname)
     let value = eval(a:varname)
     call add(a:lines, 'let ' . a:varname . ' = "' . value . '"')
   endif
 endfunction
 
-function! arduino#GetArduinoDir()
+function! arduino#GetArduinoDir() abort
   if exists('g:arduino_dir')
     return g:arduino_dir
   endif
@@ -428,6 +476,24 @@ function! arduino#GetArduinoDir()
     throw "Could not find arduino directory. Please set g:arduino_dir"
   endif
   return arduino_dir
+endfunction
+
+function! arduino#GetArduinoHomeDir() abort
+  if exists('g:arduino_home_dir')
+    return g:arduino_home_dir
+  endif
+  return $HOME . "/.arduino15"
+endfunction
+
+" Print the current configuration
+function! arduino#GetInfo() abort
+    let port = arduino#GetPort()
+    if empty(port)
+        let port = "none"
+    endif
+    echo "Board:        " . g:arduino_board
+    echo "Programmer:   " . g:arduino_programmer
+    echo "Port:         " . port
 endfunction
 
 " Ctrlp extension {{{1
@@ -447,12 +513,12 @@ else
   let g:arduino_ctrlp_enabled = 0
 endif
 
-function! arduino#ctrlp_GetData()
+function! arduino#ctrlp_GetData() abort
   return s:ctrlp_list
 endfunction
 
-function! arduino#ctrlp_Callback(mode, str)
-	call ctrlp#exit()
+function! arduino#ctrlp_Callback(mode, str) abort
+  call ctrlp#exit()
   call call(s:ctrlp_callback, [a:str])
 endfunction
 

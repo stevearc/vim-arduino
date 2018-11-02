@@ -25,6 +25,7 @@ Overview:~
 
   |arduino_cmd|..................Path to the arduino executable
   |arduino_dir|..................Path to the arduino install directory
+  |arduino_home_dir|.............Path to the arduino user install directory
   |arduino_run_headless|.........Try to run inside Xvfb
   |arduino_args|.................Additional args to pass to 'arduino' command.
   |arduino_board|................The fully-qualified name of the board.
@@ -49,6 +50,13 @@ The path to your 'arduino' directory. Usually vim-arduino will be able to
 detect it, but if it cannot you can set the value manually. >
   let g:arduino_dir = '/usr/share/local/arduino'
 <
+
+                                                        *'g:arduino_home_dir'*
+The path to your user's 'arduino' data directory. Usually vim-arduino will be
+able to detect it, but if it cannot you can set the value manually. >
+  let g:arduino_home_dir = $HOME . ".arduino15"
+<
+
                                                     *'g:arduino_run_headless'*
 Run the arduino command inside a Xvfb. Requires Xvfb to be installed and in the
 PATH. >
