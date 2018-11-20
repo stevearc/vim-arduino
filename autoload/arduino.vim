@@ -482,6 +482,10 @@ function! arduino#GetArduinoHomeDir() abort
   if exists('g:arduino_home_dir')
     return g:arduino_home_dir
   endif
+  if s:OS == 'Darwin'
+    return $HOME . "/Library/Arduino15"
+  endif
+
   return $HOME . "/.arduino15"
 endfunction
 
