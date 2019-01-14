@@ -72,7 +72,7 @@ Note: if you are using the 'airline' plugin for the status line, you can display
 this custom status part instead of the filename extension with:
 
 ```vim
-let g:airline_section_x='%{MyStatusLine()}'
+autocmd BufNewFile,BufRead *.ino let g:airline_section_x='%{MyStatusLine()}'
 ```
 
 ## License
