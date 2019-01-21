@@ -26,6 +26,7 @@ Overview:~
   |arduino_cmd|..................Path to the arduino executable
   |arduino_dir|..................Path to the arduino install directory
   |arduino_home_dir|.............Path to the arduino user install directory
+  |arduino_build_path|...........Path to use for building the sketch
   |arduino_run_headless|.........Try to run inside Xvfb
   |arduino_args|.................Additional args to pass to 'arduino' command.
   |arduino_board|................The fully-qualified name of the board.
@@ -57,6 +58,18 @@ detect it, but if it cannot you can set the value manually. >
 The path to your user's 'arduino' data directory. Usually vim-arduino will be
 able to detect it, but if it cannot you can set the value manually. >
   let g:arduino_home_dir = $HOME . ".arduino15"
+<
+
+                                                        *'g:arduino_build_path'*
+The path where the sketch will be build and all intermediate object files will
+be placed. The final binary (.bin) can be found after building/verification in
+the folder.
+For a dynamic path you can following substitutions:
+ - {file} is substituted with the current sketch file (.ino)
+ - {project_dir} is substituted with the folder the sketch resides in
+Usage of a build path can be disabled with g:arduino_build_path = ''.
+If disabled, arduino ide chooses a temporary path and will do a full rebuild. >
+  let g:arduino_build_path = "{project_dir}/build"
 <
 
                                                     *'g:arduino_run_headless'*
