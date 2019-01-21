@@ -11,6 +11,8 @@
 'g:arduino_serial_port'	arduino.txt	/*'g:arduino_serial_port'*
 'g:arduino_serial_port_globs'	arduino.txt	/*'g:arduino_serial_port_globs'*
 'g:arduino_serial_tmux'	arduino.txt	/*'g:arduino_serial_tmux'*
+'g:arduino_verify_tmux'	arduino.txt	/*'g:arduino_verify_tmux'*
+'g:arduino_upload_tmux'	arduino.txt	/*'g:arduino_upload_tmux'*
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
 :ArduinoChoosePort	arduino.txt	/*:ArduinoChoosePort*
