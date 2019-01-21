@@ -51,6 +51,12 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_serial_tmux')
     let g:arduino_serial_tmux = 'split-window -d'
   endif
+  if !exists('g:arduino_upload_tmux')
+    let g:arduino_upload_tmux = 'split-window -d -p20'
+  endif
+  if !exists('g:arduino_verify_tmux')
+    let g:arduino_verify_tmux = 'split-window -d -p20'
+  endif
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
   endif
@@ -335,13 +341,23 @@ endfunction
 
 function! arduino#Verify() abort
   let cmd = arduino#GetArduinoCommand("--verify")
-  exe s:TERM . cmd
+  if !empty($TMUX) && !empty(g:arduino_verify_tmux)
+    " the call to $SHELL -i is to prevent the split to directly close after the command has finished
+    exe "silent exec \"!tmux " . g:arduino_verify_tmux . " '" . cmd . "; $SHELL -i'\""
+  else
+    exe s:TERM . cmd
+  endif
   return v:shell_error
 endfunction
 
 function! arduino#Upload() abort
   let cmd = arduino#GetArduinoCommand("--upload")
-  exe s:TERM . cmd
+  if !empty($TMUX) && !empty(g:arduino_upload_tmux)
+    " the call to $SHELL -i is to prevent the split to directly close after the command has finished
+    exe "silent exec \"!tmux " . g:arduino_upload_tmux . " '" . cmd . "; $SHELL -i'\""
+  else
+    exe s:TERM . cmd
+  endif
   return v:shell_error
 endfunction
 
