@@ -426,6 +426,14 @@ function! arduino#Choose(title, items, callback) abort
     let s:ctrlp_list = a:items
     let s:ctrlp_callback = a:callback
     call ctrlp#init(s:ctrlp_id)
+  elseif g:arduino_fzf_enabled
+    call fzf#run({'source':a:items, 'sink':function(a:callback), 'options':'--prompt="'.a:title.': "'})
+    " neovim got a problem with startinsert for the second fzf call, therefore feedkeys("i")
+    " see https://github.com/junegunn/fzf/issues/426
+    " see https://github.com/junegunn/fzf.vim/issues/21
+    if has("nvim") && mode() != "i"
+      call feedkeys('i')
+    endif
   else
     let labels = ["   " . a:title]
     let idx = 1
@@ -525,5 +533,12 @@ function! arduino#ctrlp_Callback(mode, str) abort
   call ctrlp#exit()
   call call(s:ctrlp_callback, [a:str])
 endfunction
+
+" fzf extension {{{1
+if exists("*fzf#run")
+  let g:arduino_fzf_enabled = 1
+else
+  let g:arduino_fzf_enabled = 0
+endif
 
 " vim:fen:fdm=marker:fmr={{{,}}}:fdl=0:fdc=1
