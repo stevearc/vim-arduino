@@ -34,6 +34,8 @@ Overview:~
   |arduino_serial_baud|..........The baud rate for the serial connection.
   |arduino_auto_baud|............Auto-detect the baud rate.
   |arduino_serial_tmux|..........Tmux command to open serial debugger.
+  |arduino_verify_tmux|..........Tmux command to open arduino verify cmd.
+  |arduino_upload_tmux|..........Tmux command to open arduino upload cmd.
   |arduino_serial_port|..........Location of the serial port.
   |arduino_serial_port_globs|....Globs to auto-search for serial port.
 
@@ -101,6 +103,20 @@ If inside a tmux session, run the serial connection command inside of this
 tmux command.  Set to '' to disable. The default will create a horizontal
 split. >
   let g:arduino_serial_tmux = 'split-window -d'
+<
+
+                                                     *'g:arduino_verify_tmux'*
+If inside a tmux session, run the arduino verify command inside of this
+tmux command.  Set to '' to disable. The default will create a horizontal
+split with a height of 20%. >
+  let g:arduino_verify_tmux = 'split-window -d -p20'
+<
+
+                                                     *'g:arduino_upload_tmux'*
+If inside a tmux session, run the arduino upload command inside of this
+tmux command.  Set to '' to disable. The default will create a horizontal
+split with a height of 20%. >
+  let g:arduino_upload_tmux = 'split-window -d -p20'
 <
 
                                                      *'g:arduino_serial_port'*
