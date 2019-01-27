@@ -42,6 +42,10 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_serial_cmd')
     let g:arduino_serial_cmd = 'screen {port} {baud}'
   endif
+  if !exists('g:arduino_build_path')
+    let g:arduino_build_path = '{project_dir}/build'
+  endif
+
   if !exists('g:arduino_serial_baud')
     let g:arduino_serial_baud = 9600
   endif
@@ -102,6 +106,17 @@ function! arduino#GetArduinoExecutable() abort
   endif
 endfunction
 
+function! arduino#GetBuildPath() abort 
+  if empty(g:arduino_build_path)
+    return ''
+  endif
+  let l:path = g:arduino_build_path
+  let l:path = substitute(l:path, '{file}', expand('%:p'), 'g')
+  let l:path = substitute(l:path, '{project_dir}', expand('%:p:h'), 'g')
+  return l:path
+endfunction
+
+
 function! arduino#GetArduinoCommand(cmd) abort
   let arduino = arduino#GetArduinoExecutable()
 
@@ -116,6 +131,10 @@ function! arduino#GetArduinoCommand(cmd) abort
   endif
   if !empty(g:arduino_programmer)
     let cmd = cmd . " --pref programmer=" . g:arduino_programmer
+  endif
+  let l:build_path = arduino#GetBuildPath()
+  if !empty(l:build_path)
+    let cmd = cmd . " --pref build.path=" . l:build_path
   endif
   let cmd = cmd . " " . g:arduino_args . " " . expand('%:p')
   return cmd

@@ -4,6 +4,7 @@
 'g:arduino_cmd'	arduino.txt	/*'g:arduino_cmd'*
 'g:arduino_dir'	arduino.txt	/*'g:arduino_dir'*
 'g:arduino_home_dir'	arduino.txt	/*'g:arduino_home_dir'*
+'g:arduino_build_path'	arduino.txt	/*'g:arduino_build_path'*
 'g:arduino_programmer'	arduino.txt	/*'g:arduino_programmer'*
 'g:arduino_run_headless'	arduino.txt	/*'g:arduino_run_headless'*
 'g:arduino_serial_baud'	arduino.txt	/*'g:arduino_serial_baud'*
