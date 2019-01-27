@@ -112,7 +112,7 @@ function! arduino#GetBuildPath() abort
   endif
   let l:path = g:arduino_build_path
   let l:path = substitute(l:path, '{file}', expand('%:p'), 'g')
-  let l:path = substitute(l:path, '{project_dir}', fnamemodify(expand('%:p'), ":h"), 'g')
+  let l:path = substitute(l:path, '{project_dir}', expand('%:p:h'), 'g')
   return l:path
 endfunction
 
