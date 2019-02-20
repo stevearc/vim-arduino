@@ -52,6 +52,9 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_auto_baud')
     let g:arduino_auto_baud = 1
   endif
+  if !exists('g:arduino_use_slime')
+    let g:arduino_use_slime = 0
+  endif
   if !exists('g:arduino_serial_tmux')
     let g:arduino_serial_tmux = 'split-window -d'
   endif
@@ -360,7 +363,9 @@ endfunction
 
 function! arduino#Verify() abort
   let cmd = arduino#GetArduinoCommand("--verify")
-  if !empty($TMUX) && !empty(g:arduino_verify_tmux)
+  if g:arduino_use_slime
+    call slime#send(cmd."\r")
+  elseif !empty($TMUX) && !empty(g:arduino_verify_tmux)
     " the call to $SHELL -i is to prevent the split to directly close after the command has finished
     exe "silent exec \"!tmux " . g:arduino_verify_tmux . " '" . cmd . "; $SHELL -i'\""
   else
@@ -371,7 +376,9 @@ endfunction
 
 function! arduino#Upload() abort
   let cmd = arduino#GetArduinoCommand("--upload")
-  if !empty($TMUX) && !empty(g:arduino_upload_tmux)
+  if g:arduino_use_slime
+    call slime#send(cmd."\r")
+  elseif !empty($TMUX) && !empty(g:arduino_upload_tmux)
     " the call to $SHELL -i is to prevent the split to directly close after the command has finished
     exe "silent exec \"!tmux " . g:arduino_upload_tmux . " '" . cmd . "; $SHELL -i'\""
   else
@@ -383,7 +390,9 @@ endfunction
 function! arduino#Serial() abort
   let cmd = arduino#GetSerialCmd()
   if empty(cmd) | return | endif
-  if !empty($TMUX) && !empty(g:arduino_serial_tmux)
+  if g:arduino_use_slime
+    call slime#send(cmd."\r")
+  elseif !empty($TMUX) && !empty(g:arduino_serial_tmux)
     exe s:TERM . "tmux " . g:arduino_serial_tmux . " '" . cmd . "'"
   else
     exe s:TERM . cmd

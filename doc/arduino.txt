@@ -34,6 +34,7 @@ Overview:~
   |arduino_serial_cmd|...........Command to run to attach to serial port.
   |arduino_serial_baud|..........The baud rate for the serial connection.
   |arduino_auto_baud|............Auto-detect the baud rate.
+  |arduino_use_slime|............Enables to use vim-slime for sending cmd to tmux.
   |arduino_serial_tmux|..........Tmux command to open serial debugger.
   |arduino_verify_tmux|..........Tmux command to open arduino verify cmd.
   |arduino_upload_tmux|..........Tmux command to open arduino upload cmd.
@@ -111,6 +112,11 @@ Automatically set the baud rate by searching for 'Serial.begin()' >
   let g:arduino_auto_baud = 1
 <
 
+                                                     *'g:arduino_use_slime'*
+Enables to use vim-slime to send the command to tmux/screen/... .
+See :help slime for configuration of slime. Disabled per default. >
+  let g:arduino_use_slime = 0
+<
                                                      *'g:arduino_serial_tmux'*
 If inside a tmux session, run the serial connection command inside of this
 tmux command.  Set to '' to disable. The default will create a horizontal
