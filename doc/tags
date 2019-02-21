@@ -14,6 +14,7 @@
 'g:arduino_serial_tmux'	arduino.txt	/*'g:arduino_serial_tmux'*
 'g:arduino_verify_tmux'	arduino.txt	/*'g:arduino_verify_tmux'*
 'g:arduino_upload_tmux'	arduino.txt	/*'g:arduino_upload_tmux'*
+'g:arduino_use_slime'	arduino.txt	/*'g:arduino_use_slime'*
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
 :ArduinoChoosePort	arduino.txt	/*:ArduinoChoosePort*
