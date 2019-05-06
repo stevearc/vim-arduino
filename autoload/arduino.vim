@@ -290,7 +290,7 @@ function! arduino#GetProgrammers() abort
       let package = pieces[-5]
     else
       let package = pieces[-3]
-      continue
+      " continue
     endif
     let lines = readfile(filename)
     for line in lines
