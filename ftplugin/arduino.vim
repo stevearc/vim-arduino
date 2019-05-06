@@ -21,6 +21,7 @@ command! -buffer -bar -nargs=? ArduinoChooseBoard call arduino#ChooseBoard(<f-ar
 command! -buffer -bar -nargs=? ArduinoChooseProgrammer call arduino#ChooseProgrammer(<f-args>)
 command! -buffer -bar ArduinoVerify call arduino#Verify()
 command! -buffer -bar ArduinoUpload call arduino#Upload()
+command! -buffer -bar ArduinoUploadUsingProgrammer call arduino#UploadUsingProgrammer()
 command! -buffer -bar ArduinoSerial call arduino#Serial()
 command! -buffer -bar ArduinoUploadAndSerial call arduino#UploadAndSerial()
 command! -buffer -bar ArduinoGetInfo call arduino#GetInfo()

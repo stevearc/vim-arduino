@@ -129,7 +129,6 @@ endfunction
 function! arduino#TmuxRunCommand(splitCommand, command, ...) abort
   let paneTitle = get(a:, 1, -1)
   let currentPaneId = system("tmux display-message -p '#{pane_id}'")
-  echom paneTitle
   if paneTitle == -1
     " Support for old style of tmux pane open
     exec "silent exec \"!tmux ".a:splitCommand." '".a:command."; $SHELL -i'\""
@@ -436,6 +435,20 @@ endfunction
 
 function! arduino#Upload() abort
   let cmd = arduino#GetArduinoCommand("--upload")
+  if g:arduino_use_slime
+    call slime#send(cmd."\r")
+  elseif !empty($TMUX) && !empty(g:arduino_upload_tmux)
+    " the call to $SHELL -i is to prevent the split to directly close after the command has finished
+    call arduino#TmuxRunCommand(g:arduino_upload_tmux, cmd, get(g:, 'arduino_upload_tmux_pane_title', -1))
+  else
+    exe s:TERM . cmd
+  endif
+  return v:shell_error
+endfunction
+
+
+function! arduino#UploadUsingProgrammer() abort
+  let cmd = arduino#GetArduinoCommand("--upload --useprogrammer")
   if g:arduino_use_slime
     call slime#send(cmd."\r")
   elseif !empty($TMUX) && !empty(g:arduino_upload_tmux)
