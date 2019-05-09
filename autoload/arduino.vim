@@ -58,6 +58,9 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_use_tmux_pane_title')
     let g:arduino_use_tmux_pane_title = 0
   endif
+  if !exists('g:arduino_upload_using_programmer')
+    let g:arduino_upload_using_programmer = 0 
+  endif
 
   if g:arduino_use_tmux_pane_title == 1
     if !exists('g:arduino_serial_tmux')
@@ -289,7 +292,6 @@ function! arduino#GetProgrammers() abort
       let package = pieces[-5]
     else
       let package = pieces[-3]
-      " continue
     endif
     let lines = readfile(filename)
     for line in lines
@@ -425,7 +427,6 @@ function! arduino#Verify() abort
   if g:arduino_use_slime
     call slime#send(cmd."\r")
   elseif !empty($TMUX) && !empty(g:arduino_verify_tmux)
-    " the call to $SHELL -i is to prevent the split to directly close after the command has finished
     call arduino#TmuxRunCommand(g:arduino_verify_tmux, cmd, get(g:, 'arduino_verify_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
@@ -434,25 +435,15 @@ function! arduino#Verify() abort
 endfunction
 
 function! arduino#Upload() abort
-  let cmd = arduino#GetArduinoCommand("--upload")
-  if g:arduino_use_slime
-    call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_upload_tmux)
-    " the call to $SHELL -i is to prevent the split to directly close after the command has finished
-    call arduino#TmuxRunCommand(g:arduino_upload_tmux, cmd, get(g:, 'arduino_upload_tmux_pane_title', -1))
+  if g:arduino_upload_using_programmer 
+    let cmd_options = "--upload --useprogrammer"
   else
-    exe s:TERM . cmd
+    let cmd_options = "--upload"
   endif
-  return v:shell_error
-endfunction
-
-
-function! arduino#UploadUsingProgrammer() abort
-  let cmd = arduino#GetArduinoCommand("--upload --useprogrammer")
+  let cmd = arduino#GetArduinoCommand(cmd_options)
   if g:arduino_use_slime
     call slime#send(cmd."\r")
   elseif !empty($TMUX) && !empty(g:arduino_upload_tmux)
-    " the call to $SHELL -i is to prevent the split to directly close after the command has finished
     call arduino#TmuxRunCommand(g:arduino_upload_tmux, cmd, get(g:, 'arduino_upload_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
