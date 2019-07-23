@@ -25,8 +25,8 @@ sure the `arduino` command is in your PATH.
 
 ## Configuration
 
-The docs have detailed information about configuring vim-arduino:
-https://github.com/stevearc/vim-arduino/blob/master/doc/arduino.txt
+The docs have detailed information about configuring vim-arduino
+[here](https://github.com/stevearc/vim-arduino/blob/master/doc/arduino.txt).
 
 The main commands you will want to use are:
 
