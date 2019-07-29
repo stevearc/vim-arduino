@@ -6,11 +6,17 @@ interface](https://github.com/arduino/Arduino/blob/master/build/shared/manpage.a
 
 ## Installation
 
-vim-arduino works with [Pathogen](https://github.com/tpope/vim-pathogen).
+vim-arduino works with [Pathogen](https://github.com/tpope/vim-pathogen)
 
 ```sh
 cd ~/.vim/bundle/
 git clone https://github.com/stevearc/vim-arduino
+```
+
+and [vim-plug](https://github.com/junegunn/vim-plug)
+
+```sh
+Plug 'stevearc/vim-arduino'
 ```
 
 You also need to download the [Arduino
@@ -19,8 +25,8 @@ sure the `arduino` command is in your PATH.
 
 ## Configuration
 
-The docs have detailed information about configuring vim-arduino:
-https://github.com/stevearc/vim-arduino/blob/master/doc/arduino.txt
+The docs have detailed information about configuring vim-arduino
+[here](https://github.com/stevearc/vim-arduino/blob/master/doc/arduino.txt).
 
 The main commands you will want to use are:
 
