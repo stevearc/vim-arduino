@@ -59,7 +59,7 @@ function! arduino#InitializeConfig() abort
     let g:arduino_use_tmux_pane_title = 0
   endif
   if !exists('g:arduino_upload_using_programmer')
-    let g:arduino_upload_using_programmer = 0 
+    let g:arduino_upload_using_programmer = 0
   endif
 
   if g:arduino_use_tmux_pane_title == 1
@@ -426,7 +426,7 @@ function! arduino#Verify() abort
   let cmd = arduino#GetArduinoCommand("--verify")
   if g:arduino_use_slime
     call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_verify_tmux)
+  elseif !empty($TMUX) && !empty(g:arduino_verify_tmux) && !has("gui_running")
     call arduino#TmuxRunCommand(g:arduino_verify_tmux, cmd, get(g:, 'arduino_verify_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
@@ -435,7 +435,7 @@ function! arduino#Verify() abort
 endfunction
 
 function! arduino#Upload() abort
-  if g:arduino_upload_using_programmer 
+  if g:arduino_upload_using_programmer
     let cmd_options = "--upload --useprogrammer"
   else
     let cmd_options = "--upload"
@@ -443,7 +443,7 @@ function! arduino#Upload() abort
   let cmd = arduino#GetArduinoCommand(cmd_options)
   if g:arduino_use_slime
     call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_upload_tmux)
+  elseif !empty($TMUX) && !empty(g:arduino_upload_tmux) && !has("gui_running")
     call arduino#TmuxRunCommand(g:arduino_upload_tmux, cmd, get(g:, 'arduino_upload_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
@@ -456,7 +456,7 @@ function! arduino#Serial() abort
   if empty(cmd) | return | endif
   if g:arduino_use_slime
     call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_serial_tmux)
+  elseif !empty($TMUX) && !empty(g:arduino_serial_tmux) && !has("gui_running")
     call arduino#TmuxRunCommand(g:arduino_serial_tmux, cmd, get(g:, 'arduino_serial_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
@@ -660,3 +660,4 @@ else
 endif
 
 " vim:fen:fdm=marker:fmr={{{,}}}:fdl=0:fdc=1
+
