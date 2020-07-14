@@ -55,43 +55,10 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_use_slime')
     let g:arduino_use_slime = 0
   endif
-  if !exists('g:arduino_use_tmux_pane_title')
-    let g:arduino_use_tmux_pane_title = 0
-  endif
   if !exists('g:arduino_upload_using_programmer')
     let g:arduino_upload_using_programmer = 0
   endif
 
-  if g:arduino_use_tmux_pane_title == 1
-    if !exists('g:arduino_serial_tmux')
-      let g:arduino_serial_tmux = 'split-window -h'
-    endif
-    if !exists('g:arduino_upload_tmux')
-      let g:arduino_upload_tmux = 'split-window -v -p20'
-    endif
-    if !exists('g:arduino_verify_tmux')
-      let g:arduino_verify_tmux = 'split-window -v -p20'
-    endif
-    if !exists('g:arduino_serial_tmux_pane_title')
-      let g:arduino_serial_tmux_pane_title = 'arduino-tmux-serial-pane'
-    endif
-    if !exists('g:arduino_upload_tmux_pane_title')
-      let g:arduino_upload_tmux_pane_title = 'arduino-tmux-upload-pane'
-    endif
-    if !exists('g:arduino_verify_tmux_pane_title')
-      let g:arduino_verify_tmux_pane_title = 'arduino-tmux-upload-pane'
-    endif
-  else
-    if !exists('g:arduino_serial_tmux')
-      let g:arduino_serial_tmux = 'split-window -d'
-    endif
-    if !exists('g:arduino_upload_tmux')
-      let g:arduino_upload_tmux = 'split-window -d -p20'
-    endif
-    if !exists('g:arduino_verify_tmux')
-      let g:arduino_verify_tmux = 'split-window -d -p20'
-    endif
-  endif
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
   endif
@@ -124,40 +91,6 @@ function! arduino#SaveCache() abort
   call s:CacheLine(lines, 'g:_cache_arduino_board')
   call s:CacheLine(lines, 'g:_cache_arduino_programmer')
   call writefile(lines, s:cache)
-endfunction
-
-" Tmux helpers {{{1
-" Rum tmux command. If pane with passed title exists in tmux
-" session, function do not spawn new pane but send command to it.
-function! arduino#TmuxRunCommand(splitCommand, command, ...) abort
-  let paneTitle = get(a:, 1, -1)
-  let currentPaneId = system("tmux display-message -p '#{pane_id}'")
-  if paneTitle == -1
-    " Support for old style of tmux pane open
-    exec "silent exec \"!tmux ".a:splitCommand." '".a:command."; $SHELL -i'\""
-  else
-    let paneId = arduino#TmuxFindPane(paneTitle)
-    if paneId != -1
-      exec "silent exec \"!tmux send-keys -t \\\\%".paneId." '".a:command."' C-m\""
-    else
-      exec "silent exec \"!tmux ".a:splitCommand." 'tmux select-pane -T ".paneTitle."; ".a:command."; $SHELL -i'\""
-    endif
-  endif
-  " back to pane with vim
-  exec "silent exec \"!tmux select-pane -t \\\\".currentPaneId."\""
-endfunction
-
-" Search for tmux pane id by pane title.
-" If pane is not found, return -1
-function! arduino#TmuxFindPane(title) abort
-  let panesList = split(system("tmux list-panes -a -F '#{pane_title}:#{pane_id}'"), "\n")
-  for paneEntry in panesList
-    let [_paneTitle, _paneId] = split(paneEntry,':')
-    if _paneTitle == a:title
-      return _paneId[1:]
-    endif
-  endfor
-  return -1
 endfunction
 
 " Arduino command helpers {{{1
@@ -426,8 +359,6 @@ function! arduino#Verify() abort
   let cmd = arduino#GetArduinoCommand("--verify")
   if g:arduino_use_slime
     call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_verify_tmux) && !has("gui_running")
-    call arduino#TmuxRunCommand(g:arduino_verify_tmux, cmd, get(g:, 'arduino_verify_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
   endif
@@ -443,8 +374,6 @@ function! arduino#Upload() abort
   let cmd = arduino#GetArduinoCommand(cmd_options)
   if g:arduino_use_slime
     call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_upload_tmux) && !has("gui_running")
-    call arduino#TmuxRunCommand(g:arduino_upload_tmux, cmd, get(g:, 'arduino_upload_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
   endif
@@ -456,8 +385,6 @@ function! arduino#Serial() abort
   if empty(cmd) | return | endif
   if g:arduino_use_slime
     call slime#send(cmd."\r")
-  elseif !empty($TMUX) && !empty(g:arduino_serial_tmux) && !has("gui_running")
-    call arduino#TmuxRunCommand(g:arduino_serial_tmux, cmd, get(g:, 'arduino_serial_tmux_pane_title', -1))
   else
     exe s:TERM . cmd
   endif

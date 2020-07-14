@@ -49,6 +49,15 @@ nnoremap <buffer> <leader>ab :ArduinoChooseBoard<CR>
 nnoremap <buffer> <leader>ap :ArduinoChooseProgrammer<CR>
 ```
 
+If you wish to run these commands in tmux/screen/some other location, you can
+make use of [vim-slime](https://github.com/jpalardy/vim-slime):
+
+```vim
+let g:arduino_use_slime = 1
+```
+
+### Status Line
+
 If you want to add the board type to your status line, it's easy with the
 following:
 
