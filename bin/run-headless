@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 # Wrapper script that will automatically use Xvfb to run a command
 declare -r XVFB="Xvfb :1 -nolisten tcp -screen :1 1280x800x24"
 
