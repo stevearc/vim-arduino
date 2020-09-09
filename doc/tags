@@ -16,6 +16,7 @@
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
 :ArduinoChoosePort	arduino.txt	/*:ArduinoChoosePort*
 :ArduinoChooseProgrammer	arduino.txt	/*:ArduinoChooseProgrammer*
+:ArduinoInfo	arduino.txt	/*:ArduinoInfo*
 :ArduinoSerial	arduino.txt	/*:ArduinoSerial*
 :ArduinoUpload	arduino.txt	/*:ArduinoUpload*
 :ArduinoUploadAndSerial	arduino.txt	/*:ArduinoUploadAndSerial*

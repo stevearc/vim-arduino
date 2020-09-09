@@ -59,7 +59,7 @@ able to detect it, but if it cannot you can set the value manually. >
 <
 
                                                          *'g:arduino_build_path'*
-The path where the sketch will be build and all intermediate object files will
+The path where the sketch will be built and all intermediate object files will
 be placed. The final binary (.bin) can be found after building/verification in
 the folder.
 For a dynamic path you can following substitutions:
@@ -94,7 +94,7 @@ The programmer type to use when compiling and uploading. See also
 <
                                                          *'g:arduino_serial_cmd'*
 Command used to connect to the serial port for debugging. The strings '{port}'
-and '{baud}' will be replace with the port and baud values. >
+and '{baud}' will be replaced with the port and baud values. >
   let g:arduino_serial_cmd = 'screen {port} {baud}'
   let g:arduino_serial_cmd = 'picocom {port} -b {baud} -l'
 <
@@ -110,8 +110,8 @@ Automatically set the baud rate by searching for 'Serial.begin()' >
 <
 
                                                           *'g:arduino_use_slime'*
-Enables to use vim-slime to send the command to tmux/screen/... .
-See :help slime for configuration of slime. Disabled per default. >
+Allows vim-slime to send the command to tmux/screen/... .
+See :help slime for configuration of slime. Disabled by default. >
   let g:arduino_use_slime = 0
 <
 
@@ -187,5 +187,10 @@ COMMANDS                                                       *arduino-commands
    >
   nnoremap <leader>d :ArduinoUploadAndSerial<CR>
 <
+                                                                   *:ArduinoInfo*
+:ArduinoInfo
+   Display information about the internal state of vim-arduino, including the
+   board, port, and the command that will be run in the terminal to verify your
+   sketch.
 ===============================================================================
 vim:ft=help:et:ts=2:sw=2:sts=2:norl

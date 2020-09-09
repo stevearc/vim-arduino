@@ -37,6 +37,7 @@ The main commands you will want to use are:
 * `:ArduinoUpload` - Build and upload the sketch.
 * `:ArduinoSerial` - Connect to the board for debugging over a serial port.
 * `:ArduinoUploadAndSerial` - Build, upload, and connect for debugging.
+* `:ArduinoInfo` - Display internal information. Useful for debugging issues with vim-arduino.
 
 To make easy use of these, you may want to bind them to a key combination. You
 can put the following in `.vim/ftplugin/arduino.vim`:
