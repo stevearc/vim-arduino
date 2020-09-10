@@ -48,13 +48,15 @@ Applications on Mac. >
 <
                                                                 *'g:arduino_dir'*
 The path to your 'arduino' directory. Usually vim-arduino will be able to
-detect it, but if it cannot you can set the value manually. >
+detect it, but if it cannot you can set the value manually. This is used to
+search for the built-in board definitions (i.e. the Uno and Nano) >
   let g:arduino_dir = '/usr/share/local/arduino'
 <
 
                                                            *'g:arduino_home_dir'*
 The path to your user's 'arduino' data directory. Usually vim-arduino will be
-able to detect it, but if it cannot you can set the value manually. >
+able to detect it, but if it cannot you can set the value manually. This is used
+to search for board definitions installed by the IDE Board Manager. >
   let g:arduino_home_dir = $HOME . ".arduino15"
 <
 
@@ -162,31 +164,18 @@ COMMANDS                                                       *arduino-commands
 
                                                                  *:ArduinoVerify*
 :ArduinoVerify
-   Compile your project. You may wish to bind this to a key combination. >
-  nnoremap <leader>c :ArduinoVerify<CR>
-<
-   You can also call :make directly. >
-  nnoremap <leader>m :make!<CR>
-<
+   Compile your project. This will also be the default behavior of the |:make|
+   command.
                                                                  *:ArduinoUpload*
 :ArduinoUpload
-   Compile and upload your project. You may wish to bind this to a key
-   combination. >
-  nnoremap <leader>u :ArduinoUpload<CR>
-<
+   Compile and upload your project.
                                                                  *:ArduinoSerial*
 :ArduinoSerial
-   Open a connection to the serial port for debugging. You may wish to bind
-   this to a key combination. >
-  nnoremap <leader>s :ArduinoSerial<CR>
-<
+   Open a connection to the serial port for debugging.
                                                         *:ArduinoUploadAndSerial*
 :ArduinoUploadAndSerial
    Compile and upload your project. If successful, open a connection to the
-   serial port for debugging. You may with to bind this to a key combination.
-   >
-  nnoremap <leader>d :ArduinoUploadAndSerial<CR>
-<
+   serial port for debugging.
                                                                    *:ArduinoInfo*
 :ArduinoInfo
    Display information about the internal state of vim-arduino, including the

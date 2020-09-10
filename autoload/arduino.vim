@@ -77,16 +77,18 @@ endfunction
 " Boards and programmer definitions {{{1
 function! arduino#ReloadBoards() abort
   " First let's search the arduino system install for boards
+  " The path looks like /hardware/<package>/<arch>/boards.txt
   let arduino_dir = arduino#GetArduinoDir()
   let filenames = split(globpath(arduino_dir . '/hardware', '**/boards.txt'), '\n')
   for filename in filenames
     let pieces = split(filename, '/')
     let package = pieces[-3]
     let arch = pieces[-2]
-    call arduino#AddBoard(package, arch, filename)
+    call arduino#AddHardwareDir(package, arch, filename)
   endfor
 
   " Now search any packages installed in the home dir
+  " The path looks like /packages/<package>/hardware/<arch>/<version>/boards.txt
   let arduino_home_dir = arduino#GetArduinoHomeDir()
   let packagedirs = split(globpath(arduino_home_dir . '/packages', '*'), '\n')
   for packagedir in packagedirs
@@ -96,25 +98,29 @@ function! arduino#ReloadBoards() abort
       let arch = fnamemodify(archdir, ':t')
       let filenames = split(globpath(archdir, '**/boards.txt'), '\n')
       for filename in filenames
-        call arduino#AddBoard(package, arch, filename)
+        call arduino#AddHardwareDir(package, arch, filename)
       endfor
     endfor
   endfor
 
   " Some platforms put the default arduino boards/programmers in /etc/arduino
   if filereadable('/etc/arduino/boards.txt')
-    call arduino#AddBoard('arduino', 'avr', '/etc/arduino')
+    call arduino#AddHardwareDir('arduino', 'avr', '/etc/arduino')
+  endif
+  if empty(s:hardware_dirs)
+    echoerr "Could not find any boards.txt or programmers.txt files. Please set g:arduino_dir and/or g:arduino_home_dir (see help for details)"
   endif
 endfunction
 
-function! arduino#AddBoard(package, arch, file) abort
-  if a:file =~? '\.txt$'
+function! arduino#AddHardwareDir(package, arch, file) abort
+  " If a boards.txt file was passed in, get the parent dir
+  if !isdirectory(a:file)
     let filepath = fnamemodify(a:file, ':h')
   else
     let filepath = a:file
   endif
   if !isdirectory(filepath)
-    echoerr 'Could not find hardware directory '. filepath
+    echoerr 'Could not find hardware directory or file '. a:file
     return
   endif
   let s:hardware_dirs[filepath] = {
@@ -218,8 +224,6 @@ function! arduino#GetBoards() abort
 endfunction
 
 function! arduino#GetBoardOptions(board) abort
-  let arduino_dir = arduino#GetArduinoDir()
-  let arduino_home_dir = arduino#GetArduinoHomeDir()
   " Board will be in the format package:arch:board
   let [package, arch, boardname] = split(a:board, ':')
 
@@ -566,9 +570,6 @@ function! arduino#GetArduinoDir() abort
   if s:OS == 'Darwin'
     let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
   endif
-  if !isdirectory(arduino_dir . '/hardware/arduino/')
-    throw "Could not find arduino directory. Please set g:arduino_dir"
-  endif
   return arduino_dir
 endfunction
 
@@ -589,10 +590,15 @@ function! arduino#GetInfo() abort
   if empty(port)
       let port = "none"
   endif
-  echo "Board:          " . g:arduino_board
-  echo "Programmer:     " . g:arduino_programmer
-  echo "Port:           " . port
-  echo "Baud rate:      " . g:arduino_serial_baud
+  let dirs = join(keys(s:hardware_dirs), ', ')
+  if empty(dirs)
+    let dirs = 'None'
+  endif
+  echo "Board         : " . g:arduino_board
+  echo "Programmer    : " . g:arduino_programmer
+  echo "Port          : " . port
+  echo "Baud rate     : " . g:arduino_serial_baud
+  echo "Hardware dirs : " . dirs
   echo "Verify command: " . arduino#GetArduinoCommand("--verify")
 endfunction
 
