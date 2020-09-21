@@ -189,9 +189,9 @@ function! arduino#GetArduinoCommand(cmd) abort
   endif
   let l:build_path = arduino#GetBuildPath()
   if !empty(l:build_path)
-    let cmd = cmd . " --pref build.path='" . l:build_path . "'"
+    let cmd = cmd . " --pref " . '"build.path=' . l:build_path . '"'
   endif
-  let cmd = cmd . " " . g:arduino_args . " '" . expand('%:p') . "'"
+  let cmd = cmd . " " . g:arduino_args . ' "' . expand('%:p') . '"'
   return cmd
 endfunction
 
@@ -635,5 +635,4 @@ else
   let g:arduino_fzf_enabled = 0
 endif
 
-" vim:fen:fdm=marker:fmr={{{,}}}:fdl=0:fdc=1
-
+" vim:fen:fdm=marker:fmr={{{,}}}
