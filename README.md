@@ -23,6 +23,12 @@ You also need to download the [Arduino
 IDE](https://www.arduino.cc/en/Main/Software) (version 1.5 or newer) and make
 sure the `arduino` command is in your PATH.
 
+## Platforms
+
+vim-arduino should work with no special configuration on Linux and Mac. I have
+not tested on Windows, but have heard that it works via WSL. See #4 for
+discussion.
+
 ## Configuration
 
 The docs have detailed information about configuring vim-arduino
