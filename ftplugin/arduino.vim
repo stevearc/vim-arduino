@@ -1,7 +1,7 @@
-if exists('b:did_ftplugin')
+if exists('b:did_arduino_ftplugin')
   finish
 endif
-let b:did_ftplugin = 1
+let b:did_arduino_ftplugin = 1
 if !exists('g:arduino_did_initialize')
   call arduino#LoadCache()
   call arduino#InitializeConfig()
@@ -26,3 +26,4 @@ command! -buffer -bar ArduinoUploadAndSerial call arduino#UploadAndSerial()
 command! -buffer -bar ArduinoGetInfo call arduino#GetInfo()
 command! -buffer -bar ArduinoInfo call arduino#GetInfo()
 command! -buffer -bar -nargs=? ArduinoChoosePort call arduino#ChoosePort(<f-args>)
+command! -buffer -bar -nargs=1 ArduinoSetBaud call arduino#SetBaud(<f-args>)

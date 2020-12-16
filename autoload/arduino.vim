@@ -459,6 +459,10 @@ function! arduino#GetSerialCmd() abort
   return l:cmd
 endfunction
 
+function! arduino#SetBaud(baud) abort
+  let g:arduino_serial_baud = a:baud
+endfunction
+
 function! arduino#SetAutoBaud() abort
   let n = 1
   while n < line("$")

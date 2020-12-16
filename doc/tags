@@ -18,6 +18,7 @@
 :ArduinoChooseProgrammer	arduino.txt	/*:ArduinoChooseProgrammer*
 :ArduinoInfo	arduino.txt	/*:ArduinoInfo*
 :ArduinoSerial	arduino.txt	/*:ArduinoSerial*
+:ArduinoSetBaud	arduino.txt	/*:ArduinoSetBaud*
 :ArduinoUpload	arduino.txt	/*:ArduinoUpload*
 :ArduinoUploadAndSerial	arduino.txt	/*:ArduinoUploadAndSerial*
 :ArduinoVerify	arduino.txt	/*:ArduinoVerify*
