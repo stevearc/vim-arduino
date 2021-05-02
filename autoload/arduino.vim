@@ -232,10 +232,13 @@ function! arduino#GetBoards() abort
   if g:arduino_use_cli
     let boards_data = s:get_json_output('arduino-cli board listall --format json')
     for board in boards_data['boards']
-      let boardname = board['fqbn']
-      call add(boards, boardname)
+      call add(boards, {
+            \ 'label': board['name'],
+            \ 'value': board['fqbn']
+            \ })
     endfor
   else
+    let seen = {}
     for [dir,meta] in items(s:hardware_dirs)
       if !isdirectory(dir)
         continue
@@ -252,15 +255,19 @@ function! arduino#GetBoards() abort
           let linesplit = split(line, '=')
           let name = linesplit[1]
           let board = meta.package . ':' . meta.arch . ':' . board
-          if index(boards, board) == -1
-            call add(boards, board)
+          if index(boards, board) == -1 && !has_key(seen, board)
+            let seen[board] = 1
+            call add(boards, {
+                  \ 'label': name,
+                  \ 'value': board
+                  \ })
           endif
         endif
       endfor
       unlet dir meta
     endfor
   endif
-  call sort(boards, 's:BoardOrder')
+  call sort(boards, 's:ChooserItemOrder')
   return boards
 endfunction
 
@@ -275,7 +282,10 @@ function! arduino#GetBoardOptions(board) abort
     for opt in opts
       let values = []
       for entry in opt['values']
-        call add(values, entry['value'])
+        call add(values, {
+          \ 'label': entry['value_label'],
+          \ 'value': entry['value']
+          \ })
       endfor
       let ret[opt['option']] = values
     endfor
@@ -328,11 +338,14 @@ function! arduino#GetProgrammers() abort
   if g:arduino_use_cli
     let data = s:get_json_output('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json')
     for entry in data['programmers']
-      call add(programmers, entry['id'])
+      call add(programmers, {
+            \ 'label': entry['name'],
+            \ 'value': entry['id'],
+            \ })
     endfor
     " I'm running into some issues with 3rd party boards (e.g. adafruit:avr:gemma) where the programmer list is empty. If so, fall back to the hardware directory method
     if !empty(programmers)
-      return sort(programmers)
+      return sort(programmers, 's:ChooserItemOrder')
     endif
   endif
   for [dir,meta] in items(s:hardware_dirs)
@@ -366,10 +379,10 @@ function! arduino#RebuildMakePrg() abort
   endif
 endfunction
 
-function! s:BoardOrder(b1, b2) abort
-  let c1 = split(a:b1, ':')[2]
-  let c2 = split(a:b2, ':')[2]
-  return c1 == c2 ? 0 : c1 > c2 ? 1 : -1
+function! s:ChooserItemOrder(i1, i2) abort
+  let l1 = has_key(a:i1, 'label') ? a:i1['label'] : a:i1['value']
+  let l2 = has_key(a:i2, 'label') ? a:i2['label'] : a:i2['value']
+  return l1 == l2 ? 0 : l1 > l2 ? 1 : -1
 endfunction
 
 " Port selection {{{2
@@ -597,19 +610,68 @@ function! s:fzf_leave(callback, item)
   let s:fzf_counter -= 1
 endfunction
 function! s:mk_fzf_callback(callback)
-  return { item -> s:fzf_leave(a:callback, item) }
+  return { item -> s:fzf_leave(a:callback, s:ChooserValueFromLabel(item)) }
 endfunction
 
-function! arduino#Choose(title, items, callback) abort
+function! s:ConvertItemsToLabels(items) abort
+  let longest = 1
+  for item in a:items
+    if has_key(item, 'label')
+      let longest = max([longest, strchars(item['label'])])
+    endif
+  endfor
+  return map(copy(a:items), 's:ChooserItemLabel(v:val, ' . longest . ')')
+endfunction
+
+function! s:ChooserItemLabel(item, ...) abort
+  let pad_amount = a:0 ? a:1 : 0
+  if has_key(a:item, 'label')
+    let label = a:item['label']
+    let spacing = 1 + max([pad_amount - strchars(label), 0])
+    return label . repeat(' ', spacing) . '[' . a:item['value'] . ']'
+  endif
+  return a:item['value']
+endfunction
+
+function! s:ChooserValueFromLabel(label) abort
+  " The label may be in the format 'label [value]'.
+  " If so, we need to parse out the value
+  let groups = matchlist(a:label, '\[\(.*\)\]$')
+  if empty(groups)
+    return a:label
+  else
+    return groups[1]
+  endif
+endfunction
+
+" items should be a list of dictionary items with the following keys:
+"   label   (optional) The string to display
+"   value   The corresponding value passed to the callback
+" items may also be a raw list of strings. They will be treated as values
+function! arduino#Choose(title, raw_items, callback) abort
+  let items = []
+  let dict_type = type({})
+  for item in a:raw_items
+    if type(item) == dict_type
+      call add(items, item)
+    else
+      call add(items, {'value': item})
+    endif
+  endfor
+
   if g:arduino_ctrlp_enabled
     let ext_data = get(g:ctrlp_ext_vars, s:ctrlp_idx)
     let ext_data.lname = a:title
-    let s:ctrlp_list = a:items
+    let s:ctrlp_list = items
     let s:ctrlp_callback = a:callback
     call ctrlp#init(s:ctrlp_id)
   elseif g:arduino_fzf_enabled
     let s:fzf_counter += 1
-    call fzf#run({'source':a:items, 'sink':s:mk_fzf_callback(a:callback), 'options':'--prompt="'.a:title.': "'})
+    call fzf#run({
+          \ 'source': s:ConvertItemsToLabels(items),
+          \ 'sink': s:mk_fzf_callback(a:callback),
+          \ 'options': '--prompt="'.a:title.': "'
+          \ })
     " neovim got a problem with startinsert for the second fzf call, therefore feedkeys("i")
     " see https://github.com/junegunn/fzf/issues/426
     " see https://github.com/junegunn/fzf.vim/issues/21
@@ -617,19 +679,16 @@ function! arduino#Choose(title, items, callback) abort
       call feedkeys('i')
     endif
   else
-    let labels = ["   " . a:title]
-    let idx = 1
-    for item in a:items
-      if idx<10
-        call add(labels, " " . idx . ") " . item)
-      else
-        call add(labels, idx . ") " . item)
-      endif
-      let idx += 1
-    endfor
+    let labels = s:ConvertItemsToLabels(items)
+    call map(labels, {i, l ->
+          \ i < 9
+          \   ? ' '.(i+1).') '.l
+          \   : (i+1).') '.l
+          \ })
+    let labels = ["   " . a:title] + labels
     let choice = inputlist(labels)
     if choice > 0
-      call call(a:callback, [a:items[choice-1]])
+      call call(a:callback, [items[choice-1]['value']])
     endif
   endif
 endfunction
@@ -693,7 +752,9 @@ endfunction
 
 " Ctrlp extension {{{1
 if exists('g:ctrlp_ext_vars')
-  let g:arduino_ctrlp_enabled = 1
+  if !exists('g:arduino_ctrlp_enabled')
+    let g:arduino_ctrlp_enabled = 1
+  endif
   let s:ctrlp_idx = len(g:ctrlp_ext_vars)
   call add(g:ctrlp_ext_vars, {
     \ 'init': 'arduino#ctrlp_GetData()',
@@ -709,16 +770,17 @@ else
 endif
 
 function! arduino#ctrlp_GetData() abort
-  return s:ctrlp_list
+  return s:ConvertItemsToLabels(s:ctrlp_list)
 endfunction
 
 function! arduino#ctrlp_Callback(mode, str) abort
   call ctrlp#exit()
-  call call(s:ctrlp_callback, [a:str])
+  let value = s:ChooserValueFromLabel(a:str)
+  call call(s:ctrlp_callback, [value])
 endfunction
 
 " fzf extension {{{1
-if exists("*fzf#run")
+if exists("*fzf#run") && !exists('g:arduino_fzf_enabled')
   let g:arduino_fzf_enabled = 1
 else
   let g:arduino_fzf_enabled = 0
