@@ -1,6 +1,7 @@
 # vim-arduino
-Vim plugin for compiling, uploading, and debugging arduino sketches. It makes
-use of the Arduino IDE's [commandline
+Vim plugin for compiling, uploading, and debugging arduino sketches. It uses
+[arduino-cli](https://arduino.github.io/arduino-cli/latest/) when available, and
+falls back to using the Arduino IDE's [commandline
 interface](https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc)
 (new in 1.5.x).
 
@@ -19,9 +20,11 @@ and [vim-plug](https://github.com/junegunn/vim-plug)
 Plug 'stevearc/vim-arduino'
 ```
 
-You also need to download the [Arduino
-IDE](https://www.arduino.cc/en/Main/Software) (version 1.5 or newer) and make
-sure the `arduino` command is in your PATH.
+Installation instructions for `arduino-cli` are here: https://arduino.github.io/arduino-cli/latest/installation/
+
+Otherwise (or in addition to), download [Arduino
+IDE](https://www.arduino.cc/en/Main/Software) (version 1.5 or newer). Linux
+users make sure the `arduino` command is in your PATH.
 
 ## Platforms
 

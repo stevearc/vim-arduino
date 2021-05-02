@@ -24,19 +24,21 @@ OPTIONS                                                       *arduino-options*
 Overview:~
 
   |arduino_cmd|..................Path to the arduino executable
+  |arduino_use_cli|..............Selects usage of newer arduino-cli tool
   |arduino_dir|..................Path to the arduino install directory
   |arduino_home_dir|.............Path to the arduino user install directory
   |arduino_build_path|...........Path to use for building the sketch
   |arduino_run_headless|.........Try to run inside Xvfb
-  |arduino_args|.................Additional args to pass to 'arduino' command.
-  |arduino_board|................The fully-qualified name of the board.
-  |arduino_programmer|...........The programmer type.
-  |arduino_serial_cmd|...........Command to run to attach to serial port.
-  |arduino_serial_baud|..........The baud rate for the serial connection.
-  |arduino_auto_baud|............Auto-detect the baud rate.
+  |arduino_args|.................Additional args to pass to 'arduino' command
+  |arduino_cli_args|.............Additional args to pass to 'arduino-cli' command
+  |arduino_board|................The fully-qualified name of the board
+  |arduino_programmer|...........The programmer type
+  |arduino_serial_cmd|...........Command to run to attach to serial port
+  |arduino_serial_baud|..........The baud rate for the serial connection
+  |arduino_auto_baud|............Auto-detect the baud rate
   |arduino_use_slime|............Use vim-slime to run commands in tmux/screen/etc
-  |arduino_serial_port|..........Location of the serial port.
-  |arduino_serial_port_globs|....Globs to auto-search for serial port.
+  |arduino_serial_port|..........Location of the serial port
+  |arduino_serial_port_globs|....Globs to auto-search for serial port
 
 -------------------------------------------------------------------------------
 Detailed descriptions and default values:~
@@ -45,6 +47,16 @@ Detailed descriptions and default values:~
 The path to the 'arduino' command. By default it will look in your PATH, or in
 Applications on Mac. >
   let g:arduino_cmd = '/usr/share/local/arduino/arduino'
+<
+                                                            *'g:arduino_use_cli'*
+The newest and least janky way to interact with arduino on the command line is
+using arduino-cli (see https://arduino.github.io/arduino-cli/latest/). If we
+detect 'arduino-cli' in your PATH, we will use it. If it is not found, we fall
+back to using the Arduino IDE commandline args (see
+https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc). You
+may set this value explicitly to force using one tool or the other. >
+  let g:arduino_use_cli = 0  " this will always use the Arduino IDE
+  let g:arduino_use_cli = 1  " this will always use arduino-cli
 <
                                                                 *'g:arduino_dir'*
 The path to your 'arduino' directory. Usually vim-arduino will be able to
@@ -83,6 +95,13 @@ and upload. See
 https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc for
 more detail. >
   let g:arduino_args = '--verbose-upload'
+<
+                                                           *'g:arduino_cli_args'*
+Additional arguments that will be passed to the 'arduino-cli' command during
+build and upload. See
+https://arduino.github.io/arduino-cli/latest/commands/arduino-cli_compile/ for
+more detail. >
+  let g:arduino_args = '-v'
 <
                                                               *'g:arduino_board'*
 The board type to use when compiling and uploading. See also

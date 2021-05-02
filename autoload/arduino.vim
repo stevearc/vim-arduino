@@ -2,6 +2,7 @@ if (exists('g:loaded_arduino_autoload') && g:loaded_arduino_autoload)
     finish
 endif
 let g:loaded_arduino_autoload = 1
+let s:has_cli = executable('arduino-cli') == 1
 if has('win64') || has('win32') || has('win16')
   echoerr "vim-arduino does not support windows :("
   finish
@@ -19,6 +20,7 @@ else
   let s:TERM = '!'
 endif
 let s:hardware_dirs = {}
+python3 import json
 
 " Initialization {{{1
 " Set up all user configuration variables
@@ -39,6 +41,9 @@ function! arduino#InitializeConfig() abort
   endif
   if !exists('g:arduino_args')
     let g:arduino_args = '--verbose-upload'
+  endif
+  if !exists('g:arduino_cli_args')
+    let g:arduino_cli_args = '-v'
   endif
   if !exists('g:arduino_serial_cmd')
     let g:arduino_serial_cmd = 'screen {port} {baud}'
@@ -61,7 +66,7 @@ function! arduino#InitializeConfig() abort
   endif
 
   if !exists('g:arduino_run_headless')
-    let g:arduino_run_headless = executable('Xvfb') ? 1 : 0
+    let g:arduino_run_headless = executable('Xvfb') == 1
   endif
 
   if !exists('g:arduino_serial_port_globs')
@@ -71,11 +76,20 @@ function! arduino#InitializeConfig() abort
                                       \'/dev/tty.usbserial*',
                                       \'/dev/tty.wchusbserial*']
   endif
+  if !exists('g:arduino_use_cli')
+    let g:arduino_use_cli = s:has_cli
+  elseif g:arduino_use_cli && !s:has_cli
+    echoerr 'arduino-cli: command not found'
+  endif
   call arduino#ReloadBoards()
 endfunction
 
 " Boards and programmer definitions {{{1
 function! arduino#ReloadBoards() abort
+  " TODO in the future if we're using arduino-cli we shouldn't have to do this,
+  " but at the moment I'm having issues where `arduino-cli board details
+  " adafruit:avr:gemma --list-programmers` is empty
+
   " First let's search the arduino system install for boards
   " The path looks like /hardware/<package>/<arch>/boards.txt
   let arduino_dir = arduino#GetArduinoDir()
@@ -171,6 +185,24 @@ function! arduino#GetBuildPath() abort
   return l:path
 endfunction
 
+function! arduino#GetCLICompileCommand(...) abort
+  let cmd = 'arduino-cli compile -b ' . g:arduino_board
+  let port = arduino#GetPort()
+  if !empty(port)
+    let cmd = cmd . ' -p ' . port
+  endif
+  if !empty(g:arduino_programmer)
+    let cmd = cmd . ' -P ' . g:arduino_programmer
+  endif
+  let l:build_path = arduino#GetBuildPath()
+  if !empty(l:build_path)
+    let cmd = cmd . ' --build-path "' . l:build_path . '"'
+  endif
+  if a:0
+    let cmd = cmd . " " . a:1
+  endif
+  return cmd . " " . g:arduino_cli_args . ' "' . expand('%:p') . '"'
+endfunction
 
 function! arduino#GetArduinoCommand(cmd) abort
   let arduino = arduino#GetArduinoExecutable()
@@ -197,33 +229,59 @@ endfunction
 
 function! arduino#GetBoards() abort
   let boards = []
-  for [dir,meta] in items(s:hardware_dirs)
-    if !isdirectory(dir)
-      continue
-    endif
-    let filename = dir . '/boards.txt'
-    if !filereadable(filename)
-      continue
-    endif
-    let lines = readfile(filename)
-    for line in lines
-      if line =~? '^[^.]*\.name=.*$'
-        let linesplit = split(line, '\.')
-        let board = linesplit[0]
-        let linesplit = split(line, '=')
-        let name = linesplit[1]
-        let board = meta.package . ':' . meta.arch . ':' . board
-        if index(boards, board) == -1
-          call add(boards, board)
-        endif
-      endif
+  if g:arduino_use_cli
+    let boards_data = s:get_json_output('arduino-cli board listall --format json')
+    for board in boards_data['boards']
+      let boardname = board['fqbn']
+      call add(boards, boardname)
     endfor
-    unlet dir meta
-  endfor
+  else
+    for [dir,meta] in items(s:hardware_dirs)
+      if !isdirectory(dir)
+        continue
+      endif
+      let filename = dir . '/boards.txt'
+      if !filereadable(filename)
+        continue
+      endif
+      let lines = readfile(filename)
+      for line in lines
+        if line =~? '^[^.]*\.name=.*$'
+          let linesplit = split(line, '\.')
+          let board = linesplit[0]
+          let linesplit = split(line, '=')
+          let name = linesplit[1]
+          let board = meta.package . ':' . meta.arch . ':' . board
+          if index(boards, board) == -1
+            call add(boards, board)
+          endif
+        endif
+      endfor
+      unlet dir meta
+    endfor
+  endif
+  call sort(boards, 's:BoardOrder')
   return boards
 endfunction
 
 function! arduino#GetBoardOptions(board) abort
+  if g:arduino_use_cli
+    let ret = {}
+    let data = s:get_json_output('arduino-cli board details ' . a:board . ' --format json')
+    if !has_key(data, 'config_options')
+      return ret
+    endif
+    let opts = data['config_options']
+    for opt in opts
+      let values = []
+      for entry in opt['values']
+        call add(values, entry['value'])
+      endfor
+      let ret[opt['option']] = values
+    endfor
+    return ret
+  endif
+
   " Board will be in the format package:arch:board
   let [package, arch, boardname] = split(a:board, ':')
 
@@ -267,6 +325,16 @@ endfunction
 
 function! arduino#GetProgrammers() abort
   let programmers = []
+  if g:arduino_use_cli
+    let data = s:get_json_output('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json')
+    for entry in data['programmers']
+      call add(programmers, entry['id'])
+    endfor
+    " I'm running into some issues with 3rd party boards (e.g. adafruit:avr:gemma) where the programmer list is empty. If so, fall back to the hardware directory method
+    if !empty(programmers)
+      return sort(programmers)
+    endif
+  endif
   for [dir,meta] in items(s:hardware_dirs)
     if !isdirectory(dir)
       continue
@@ -291,7 +359,11 @@ function! arduino#GetProgrammers() abort
 endfunction
 
 function! arduino#RebuildMakePrg() abort
-  let &l:makeprg = arduino#GetArduinoCommand("--verify")
+  if g:arduino_use_cli
+    let &l:makeprg = arduino#GetCLICompileCommand()
+  else
+    let &l:makeprg = arduino#GetArduinoCommand("--verify")
+  endif
 endfunction
 
 function! s:BoardOrder(b1, b2) abort
@@ -330,7 +402,6 @@ function! arduino#ChooseBoard(...) abort
     return
   endif
   let boards = arduino#GetBoards()
-  call sort(boards, 's:BoardOrder')
   call arduino#Choose('Arduino Board', boards, 'arduino#SelectBoard')
 endfunction
 
@@ -405,7 +476,11 @@ function! arduino#SetBoard(board, ...) abort
 endfunction
 
 function! arduino#Verify() abort
-  let cmd = arduino#GetArduinoCommand("--verify")
+  if g:arduino_use_cli
+    let cmd = arduino#GetCLICompileCommand()
+  else
+    let cmd = arduino#GetArduinoCommand("--verify")
+  endif
   if g:arduino_use_slime
     call slime#send(cmd."\r")
   else
@@ -415,12 +490,16 @@ function! arduino#Verify() abort
 endfunction
 
 function! arduino#Upload() abort
-  if g:arduino_upload_using_programmer
-    let cmd_options = "--upload --useprogrammer"
+  if g:arduino_use_cli
+    let cmd = arduino#GetCLICompileCommand('-u')
   else
-    let cmd_options = "--upload"
+    if g:arduino_upload_using_programmer
+      let cmd_options = "--upload --useprogrammer"
+    else
+      let cmd_options = "--upload"
+    endif
+    let cmd = arduino#GetArduinoCommand(cmd_options)
   endif
-  let cmd = arduino#GetArduinoCommand(cmd_options)
   if g:arduino_use_slime
     call slime#send(cmd."\r")
   else
@@ -506,7 +585,12 @@ endfunction
 "}}}2
 
 " Utility functions {{{1
-"
+
+function! s:get_json_output(cmd) abort
+  let output_str = system(a:cmd)
+  return py3eval('json.loads(vim.eval("output_str"))')
+endfunction
+
 let s:fzf_counter = 0
 function! s:fzf_leave(callback, item)
   call function(a:callback)(a:item)
@@ -604,6 +688,7 @@ function! arduino#GetInfo() abort
   echo "Baud rate     : " . g:arduino_serial_baud
   echo "Hardware dirs : " . dirs
   echo "Verify command: " . arduino#GetArduinoCommand("--verify")
+  echo "CLI command   : " . arduino#GetCLICompileCommand()
 endfunction
 
 " Ctrlp extension {{{1

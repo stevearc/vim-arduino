@@ -2,6 +2,7 @@
 'g:arduino_auto_baud'	arduino.txt	/*'g:arduino_auto_baud'*
 'g:arduino_board'	arduino.txt	/*'g:arduino_board'*
 'g:arduino_build_path'	arduino.txt	/*'g:arduino_build_path'*
+'g:arduino_cli_args'	arduino.txt	/*'g:arduino_cli_args'*
 'g:arduino_cmd'	arduino.txt	/*'g:arduino_cmd'*
 'g:arduino_dir'	arduino.txt	/*'g:arduino_dir'*
 'g:arduino_home_dir'	arduino.txt	/*'g:arduino_home_dir'*
@@ -11,6 +12,7 @@
 'g:arduino_serial_cmd'	arduino.txt	/*'g:arduino_serial_cmd'*
 'g:arduino_serial_port'	arduino.txt	/*'g:arduino_serial_port'*
 'g:arduino_serial_port_globs'	arduino.txt	/*'g:arduino_serial_port_globs'*
+'g:arduino_use_cli'	arduino.txt	/*'g:arduino_use_cli'*
 'g:arduino_use_slime'	arduino.txt	/*'g:arduino_use_slime'*
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
