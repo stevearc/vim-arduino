@@ -276,7 +276,7 @@ endfunction
 
 function! arduino#GetBoardOptions(board) abort
   if g:arduino_use_cli
-    let ret = {}
+    let ret = []
     let data = s:get_json_output('arduino-cli board details ' . a:board . ' --format json')
     if !has_key(data, 'config_options')
       return ret
@@ -290,7 +290,11 @@ function! arduino#GetBoardOptions(board) abort
           \ 'value': entry['value']
           \ })
       endfor
-      let ret[opt['option']] = values
+      call add(ret, {
+            \ 'option': opt['option'],
+            \ 'option_label': opt['option_label'],
+            \ 'values': values
+            \ })
     endfor
     return ret
   endif
@@ -330,10 +334,18 @@ function! arduino#GetBoardOptions(board) abort
       endif
     endfor
     if matched
-      return options
+      let ret = []
+      for value in keys(options)
+        call add(ret, {
+              \ 'option': value,
+              \ 'option_label': value,
+              \ 'values': options[value]
+              \ })
+      endfor
+      return ret
     endif
   endfor
-  return {}
+  return []
 endfunction
 
 function! arduino#GetProgrammers() abort
@@ -448,10 +460,10 @@ endfunction
 " Prompt user for the next unselected board option
 function! arduino#ChooseBoardOption() abort
   let available_opts = s:callback_data.available_opts
-  for opt in keys(available_opts)
-    if !has_key(s:callback_data.opts, opt)
-      let s:callback_data.active_option = opt
-      call arduino#Choose(opt, available_opts[opt], 'arduino#SelectOption')
+  for opt in available_opts
+    if !has_key(s:callback_data.opts, opt.option)
+      let s:callback_data.active_option = opt.option
+      call arduino#Choose(opt.option_label, opt.values, 'arduino#SelectOption')
       return
     endif
   endfor
