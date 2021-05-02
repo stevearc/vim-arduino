@@ -81,6 +81,9 @@ function! arduino#InitializeConfig() abort
   elseif g:arduino_use_cli && !s:has_cli
     echoerr 'arduino-cli: command not found'
   endif
+  if !exists('g:arduino_telescope_enabled')
+    let g:arduino_telescope_enabled = luaeval("pcall(require, 'telescope')")
+  endif
   call arduino#ReloadBoards()
 endfunction
 
@@ -255,7 +258,7 @@ function! arduino#GetBoards() abort
           let linesplit = split(line, '=')
           let name = linesplit[1]
           let board = meta.package . ':' . meta.arch . ':' . board
-          if index(boards, board) == -1 && !has_key(seen, board)
+          if !has_key(seen, board)
             let seen[board] = 1
             call add(boards, {
                   \ 'label': name,
@@ -337,17 +340,21 @@ function! arduino#GetProgrammers() abort
   let programmers = []
   if g:arduino_use_cli
     let data = s:get_json_output('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json')
-    for entry in data['programmers']
-      call add(programmers, {
-            \ 'label': entry['name'],
-            \ 'value': entry['id'],
-            \ })
-    endfor
-    " I'm running into some issues with 3rd party boards (e.g. adafruit:avr:gemma) where the programmer list is empty. If so, fall back to the hardware directory method
-    if !empty(programmers)
-      return sort(programmers, 's:ChooserItemOrder')
+    if has_key(data, 'programmers')
+      for entry in data['programmers']
+        call add(programmers, {
+              \ 'label': entry['name'],
+              \ 'value': entry['id'],
+              \ })
+      endfor
+      " I'm running into some issues with 3rd party boards (e.g. adafruit:avr:gemma) where the programmer list is empty. If so, fall back to the hardware directory method
+      if !empty(programmers)
+        return sort(programmers, 's:ChooserItemOrder')
+      endif
     endif
   endif
+
+  let seen = {}
   for [dir,meta] in items(s:hardware_dirs)
     if !isdirectory(dir)
       continue
@@ -361,9 +368,15 @@ function! arduino#GetProgrammers() abort
       if line =~? '^[^.]*\.name=.*$'
         let linesplit = split(line, '\.')
         let programmer = linesplit[0]
+        let linesplit = split(line, '=')
+        let name = linesplit[1]
         let prog = meta.package . ':' . programmer
-        if index(programmers, prog) == -1
-          call add(programmers, prog)
+        if !has_key(seen, prog)
+          let seen[prog] = 1
+          call add(programmers, {
+                \ 'label': name,
+                \ 'value': prog
+                \ })
         endif
       endif
     endfor
@@ -396,7 +409,7 @@ function! arduino#ChoosePort(...) abort
   if empty(ports)
     echoerr "No likely serial ports detected!"
   else
-    call arduino#Choose('Port', ports, 'arduino#SelectPort')
+    call arduino#Choose('Select Port', ports, 'arduino#SelectPort')
   endif
 endfunction
 
@@ -415,7 +428,7 @@ function! arduino#ChooseBoard(...) abort
     return
   endif
   let boards = arduino#GetBoards()
-  call arduino#Choose('Arduino Board', boards, 'arduino#SelectBoard')
+  call arduino#Choose('Select Board', boards, 'arduino#SelectBoard')
 endfunction
 
 " Callback from board selection. Sets the board and prompts for any options
@@ -428,7 +441,8 @@ function! arduino#SelectBoard(board) abort
         \ 'opts': {},
         \ 'active_option': '',
         \}
-  call arduino#ChooseBoardOption()
+  " Have to delay this to give the previous chooser UI time to clear
+  call timer_start(10, {tid -> arduino#ChooseBoardOption()})
 endfunction
 
 " Prompt user for the next unselected board option
@@ -459,7 +473,7 @@ function! arduino#ChooseProgrammer(...) abort
     return
   endif
   let programmers = arduino#GetProgrammers()
-  call arduino#Choose('Arduino Programmer', programmers, 'arduino#SetProgrammer')
+  call arduino#Choose('Select Programmer', programmers, 'arduino#SetProgrammer')
 endfunction
 
 function! arduino#SetProgrammer(programmer) abort
@@ -659,7 +673,9 @@ function! arduino#Choose(title, raw_items, callback) abort
     endif
   endfor
 
-  if g:arduino_ctrlp_enabled
+  if g:arduino_telescope_enabled
+    call luaeval("require('arduino.telescope').choose('".a:title."', _A, '".a:callback."')", items)
+  elseif g:arduino_ctrlp_enabled
     let ext_data = get(g:ctrlp_ext_vars, s:ctrlp_idx)
     let ext_data.lname = a:title
     let s:ctrlp_list = items
@@ -673,11 +689,10 @@ function! arduino#Choose(title, raw_items, callback) abort
           \ 'options': '--prompt="'.a:title.': "'
           \ })
   else
-    let labels = s:ConvertItemsToLabels(items)
-    call map(labels, {i, l ->
+    let labels = map(copy(items), {i, v ->
           \ i < 9
-          \   ? ' '.(i+1).') '.l
-          \   : (i+1).') '.l
+          \   ? ' '.(i+1).') '.v.label
+          \   : (i+1).') '.v.label
           \ })
     let labels = ["   " . a:title] + labels
     let choice = inputlist(labels)
