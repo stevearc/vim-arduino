@@ -672,12 +672,6 @@ function! arduino#Choose(title, raw_items, callback) abort
           \ 'sink': s:mk_fzf_callback(a:callback),
           \ 'options': '--prompt="'.a:title.': "'
           \ })
-    " neovim got a problem with startinsert for the second fzf call, therefore feedkeys("i")
-    " see https://github.com/junegunn/fzf/issues/426
-    " see https://github.com/junegunn/fzf.vim/issues/21
-    if has("nvim") && mode() != "i" && s:fzf_counter > 1
-      call feedkeys('i')
-    endif
   else
     let labels = s:ConvertItemsToLabels(items)
     call map(labels, {i, l ->
