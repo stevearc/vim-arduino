@@ -29,8 +29,8 @@ users make sure the `arduino` command is in your PATH.
 ## Platforms
 
 vim-arduino should work with no special configuration on Linux and Mac. I have
-not tested on Windows, but have heard that it works via WSL. See #4 for
-discussion.
+not tested on Windows, but have heard that it works via WSL. See
+[this issue](https://github.com/stevearc/vim-arduino/issues/4) for discussion.
 
 ## Configuration
 
@@ -79,19 +79,22 @@ endfunction
 setl statusline=%!MyStatusLine()
 ```
 
-Or if you want something a bit fancier that includes serial port info:
+This is my personal configuration (again, inside `ftplugin/arduino.vim`)
 
 ```vim
 " my_file.ino [arduino:avr:uno] [arduino:usbtinyisp] (/dev/ttyACM0:9600)
-function! MyStatusLine()
+function! ArduinoStatusLine()
   let port = arduino#GetPort()
-  let line = '%f [' . g:arduino_board . '] [' . g:arduino_programmer . ']'
+  let line = '[' . g:arduino_board . '] [' . g:arduino_programmer . ']'
   if !empty(port)
     let line = line . ' (' . port . ':' . g:arduino_serial_baud . ')'
   endif
   return line
 endfunction
-setl statusline=%!MyStatusLine()
+augroup ArduinoStatusLine
+  autocmd! * <buffer>
+  autocmd BufWinEnter <buffer> setlocal stl=%f\ %h%w%m%r\ %{ArduinoStatusLine()}\ %=\ %(%l,%c%V\ %=\ %P%)
+augroup END
 ```
 Note: if you are using the 'airline' plugin for the status line, you can display
 this custom status part instead of the filename extension with:
