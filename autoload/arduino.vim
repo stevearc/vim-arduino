@@ -701,10 +701,10 @@ function! arduino#Choose(title, raw_items, callback) abort
           \ 'options': '--prompt="'.a:title.': "'
           \ })
   else
-    let labels = map(copy(items), {i, v ->
+    let labels = map(copy(s:ConvertItemsToLabels(items)), {i, l ->
           \ i < 9
-          \   ? ' '.(i+1).') '.v.label
-          \   : (i+1).') '.v.label
+          \   ? ' '.(i+1).') '.l
+          \   : (i+1).') '.l
           \ })
     let labels = ["   " . a:title] + labels
     let choice = inputlist(labels)
