@@ -346,7 +346,10 @@ function! arduino#GetBoardOptions(board) abort
 endfunction
 
 function! arduino#GetProgrammers() abort
-  let programmers = []
+  let programmers = [{
+        \ 'label': '-None-',
+        \ 'value': '',
+        \}]
   if g:arduino_use_cli
     let data = s:get_json_output('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json')
     if has_key(data, 'programmers')
@@ -565,7 +568,7 @@ endfunction
 
 function! arduino#GetSerialCmd() abort
   let port = arduino#GetPort()
-  if empty(port)
+  if !port
     echoerr "Error! No serial port found"
     return ''
   endif

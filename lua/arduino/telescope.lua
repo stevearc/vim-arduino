@@ -9,7 +9,7 @@ local M = {}
 local entry_maker = function(item)
   return {
     display = item.label or item.value,
-    ordinal = item.value,
+    ordinal = item.label or item.value,
     value = item.value,
   }
 end
