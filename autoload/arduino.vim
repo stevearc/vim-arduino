@@ -191,7 +191,7 @@ function! arduino#GetCLICompileCommand(...) abort
   if !empty(port)
     let cmd = cmd . ' -p ' . port
   endif
-  if !empty(g:arduino_programmer)
+  if !empty(g:arduino_programmer) && g:arduino_upload_using_programmer
     let cmd = cmd . ' -P ' . g:arduino_programmer
   endif
   let l:build_path = arduino#GetBuildPath()
