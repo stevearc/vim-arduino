@@ -36,7 +36,7 @@ function! arduino#InitializeConfig() abort
     if exists('g:_cache_arduino_programmer')
       let g:arduino_programmer = g:_cache_arduino_programmer
     else
-      let g:arduino_programmer = 'arduino:usbtinyisp'
+      let g:arduino_programmer = ''
     endif
   endif
   if !exists('g:arduino_args')
@@ -60,9 +60,6 @@ function! arduino#InitializeConfig() abort
   endif
   if !exists('g:arduino_use_slime')
     let g:arduino_use_slime = 0
-  endif
-  if !exists('g:arduino_upload_using_programmer')
-    let g:arduino_upload_using_programmer = 0
   endif
 
   if !exists('g:arduino_run_headless')
@@ -532,10 +529,10 @@ function! arduino#Upload() abort
   if g:arduino_use_cli
     let cmd = arduino#GetCLICompileCommand('-u')
   else
-    if g:arduino_upload_using_programmer
-      let cmd_options = "--upload --useprogrammer"
-    else
+    if empty(g:arduino_programmer)
       let cmd_options = "--upload"
+    else
+      let cmd_options = "--upload --useprogrammer"
     endif
     let cmd = arduino#GetArduinoCommand(cmd_options)
   endif
