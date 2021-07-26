@@ -565,7 +565,7 @@ endfunction
 
 function! arduino#GetSerialCmd() abort
   let port = arduino#GetPort()
-  if !port
+  if empty(port)
     echoerr "Error! No serial port found"
     return ''
   endif
