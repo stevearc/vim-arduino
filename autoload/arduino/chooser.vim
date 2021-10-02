@@ -13,7 +13,7 @@ function! arduino#chooser#Choose(title, raw_items, callback) abort
     endif
   endfor
 
-  if g:arduino_telescope_enabled
+  if get(g:, 'arduino_telescope_enabled', 0)
     call luaeval("require('arduino.telescope').choose('".a:title."', _A, '".a:callback."')", items)
   elseif g:arduino_ctrlp_enabled
     let ext_data = get(g:ctrlp_ext_vars, s:ctrlp_idx)
@@ -121,7 +121,7 @@ function! s:mk_fzf_callback(callback)
 endfunction
 
 " telescope extension {{{1
-if !exists('g:arduino_telescope_enabled')
+if !exists('g:arduino_telescope_enabled') && exists('*luaeval')
   let g:arduino_telescope_enabled = luaeval("pcall(require, 'telescope')")
 endif
 
