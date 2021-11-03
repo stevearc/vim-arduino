@@ -140,7 +140,7 @@ See :help slime for configuration of slime. Disabled by default. >
 Connect to this serial port when uploading & debugging. This is not set by
 default. If not set, vim-arduino will attempt to guess which port to use. See
 also |:ArduinoChoosePort| >
-  let g:arduino_serial_port = /dev/ttyACM0
+  let g:arduino_serial_port = '/dev/ttyACM0'
 <
 
                                                   *'g:arduino_serial_port_globs'*
