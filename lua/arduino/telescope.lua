@@ -1,5 +1,6 @@
 local themes = require('telescope.themes')
 local actions = require('telescope.actions')
+local state = require('telescope.actions.state')
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 local conf = require('telescope.config').values
@@ -27,7 +28,7 @@ M.choose = function(title, items, callback)
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
       actions.select_default:replace(function()
-        local selection = actions.get_selected_entry()
+        local selection = state.get_selected_entry()
         actions.close(prompt_bufnr)
         if type(callback) == "string" then
           vim.call(callback, selection.value)
