@@ -673,8 +673,11 @@ function! arduino#GetInfo() abort
   echo "Port          : " . port
   echo "Baud rate     : " . g:arduino_serial_baud
   echo "Hardware dirs : " . dirs
-  echo "Verify command: " . arduino#GetArduinoCommand("--verify")
-  echo "CLI command   : " . arduino#GetCLICompileCommand()
+  if g:arduino_use_cli
+    echo "Verify command: " . arduino#GetCLICompileCommand()
+  else
+    echo "Verify command: " . arduino#GetArduinoCommand("--verify")
+  endif
 endfunction
 
 " vim:fen:fdm=marker:fmr={{{,}}}
