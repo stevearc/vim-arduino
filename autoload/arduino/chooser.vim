@@ -13,7 +13,9 @@ function! arduino#chooser#Choose(title, raw_items, callback) abort
     endif
   endfor
 
-  if get(g:, 'arduino_telescope_enabled', 0)
+  if get(g:, 'arduino_nvim_select_enabled', 0)
+    call luaeval("require('arduino').select_shim(_A[1], _A[2], _A[3])", [a:title, items, a:callback])
+  elseif get(g:, 'arduino_telescope_enabled', 0)
     call luaeval("require('arduino.telescope').choose('".a:title."', _A, '".a:callback."')", items)
   elseif g:arduino_ctrlp_enabled
     let ext_data = get(g:ctrlp_ext_vars, s:ctrlp_idx)
@@ -123,6 +125,11 @@ endfunction
 " telescope extension {{{1
 if !exists('g:arduino_telescope_enabled') && exists('*luaeval')
   let g:arduino_telescope_enabled = luaeval("pcall(require, 'telescope')")
+endif
+
+" neovim vim.ui.select {{{1
+if !exists('g:arduino_nvim_select_enabled') && exists('*luaeval')
+  let g:arduino_nvim_select_enabled = luaeval('(vim.ui and vim.ui.select) ~= nil')
 endif
 
 " vim:fen:fdm=marker:fmr={{{,}}}
