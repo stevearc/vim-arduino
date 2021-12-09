@@ -271,7 +271,7 @@ endfunction
 function! arduino#GetBoardOptions(board) abort
   if g:arduino_use_cli
     let ret = []
-    let data = json_decode(system('arduino-cli board details ' . a:board . ' --format json'))
+    let data = json_decode(system('arduino-cli board details -b ' . a:board . ' --format json'))
     if !has_key(data, 'config_options')
       return ret
     endif
