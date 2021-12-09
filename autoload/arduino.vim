@@ -348,7 +348,7 @@ function! arduino#GetProgrammers() abort
         \ 'value': '',
         \}]
   if g:arduino_use_cli
-    let data = json_decode(system('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json'))
+    let data = json_decode(system('arduino-cli board details -b ' . g:arduino_board . ' --list-programmers --format json'))
     if has_key(data, 'programmers')
       for entry in data['programmers']
         call add(programmers, {
