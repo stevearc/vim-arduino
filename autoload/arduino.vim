@@ -227,7 +227,7 @@ endfunction
 function! arduino#GetBoards() abort
   let boards = []
   if g:arduino_use_cli
-    let boards_data = s:get_json_output('arduino-cli board listall --format json')
+    let boards_data = json_decode(system('arduino-cli board listall --format json'))
     for board in boards_data['boards']
       call add(boards, {
             \ 'label': board['name'],
@@ -271,7 +271,7 @@ endfunction
 function! arduino#GetBoardOptions(board) abort
   if g:arduino_use_cli
     let ret = []
-    let data = s:get_json_output('arduino-cli board details ' . a:board . ' --format json')
+    let data = json_decode(system('arduino-cli board details ' . a:board . ' --format json'))
     if !has_key(data, 'config_options')
       return ret
     endif
@@ -348,7 +348,7 @@ function! arduino#GetProgrammers() abort
         \ 'value': '',
         \}]
   if g:arduino_use_cli
-    let data = s:get_json_output('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json')
+    let data = json_decode(system('arduino-cli board details ' . g:arduino_board . ' --list-programmers --format json'))
     if has_key(data, 'programmers')
       for entry in data['programmers']
         call add(programmers, {
@@ -621,11 +621,6 @@ endfunction
 "}}}2
 
 " Utility functions {{{1
-
-function! s:get_json_output(cmd) abort
-  let output_str = system(a:cmd)
-  return py3eval('json.loads(vim.eval("output_str"))')
-endfunction
 
 function! s:CacheLine(lines, varname) abort
   if exists(a:varname)
