@@ -61,8 +61,8 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_use_slime')
     let g:arduino_use_slime = 0
   endif
-  if !exists('g:arduino_use_tmux') || !exists('$TMUX')
-    let g:arduino_use_tmux = 0
+  if !exists('g:arduino_use_vimux') || !exists('$TMUX')
+    let g:arduino_use_vimux = 0
   endif
 
   if !exists('g:arduino_run_headless')
@@ -87,7 +87,7 @@ endfunction
 function! arduino#RunCmd(cmd) abort
   if g:arduino_use_slime
     call slime#send(a:cmd . "\r")
-  elseif g:arduino_use_tmux
+  elseif g:arduino_use_vimux
     call VimuxRunCommand(a:cmd)
   else
     exe s:TERM . a:cmd
