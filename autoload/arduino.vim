@@ -61,6 +61,9 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_use_slime')
     let g:arduino_use_slime = 0
   endif
+  if !exists('g:arduino_use_vimux') || !exists('$TMUX')
+    let g:arduino_use_vimux = 0
+  endif
 
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') == 1
@@ -79,6 +82,16 @@ function! arduino#InitializeConfig() abort
     echoerr 'arduino-cli: command not found'
   endif
   call arduino#ReloadBoards()
+endfunction
+
+function! arduino#RunCmd(cmd) abort
+  if g:arduino_use_slime
+    call slime#send(a:cmd . "\r")
+  elseif g:arduino_use_vimux
+    call VimuxRunCommand(a:cmd)
+  else
+    exe s:TERM . a:cmd
+  endif
 endfunction
 
 " Boards and programmer definitions {{{1
@@ -517,11 +530,8 @@ function! arduino#Verify() abort
   else
     let cmd = arduino#GetArduinoCommand("--verify")
   endif
-  if g:arduino_use_slime
-    call slime#send(cmd."\r")
-  else
-    exe s:TERM . cmd
-  endif
+
+  call arduino#RunCmd(cmd)
   return v:shell_error
 endfunction
 
@@ -536,22 +546,16 @@ function! arduino#Upload() abort
     endif
     let cmd = arduino#GetArduinoCommand(cmd_options)
   endif
-  if g:arduino_use_slime
-    call slime#send(cmd."\r")
-  else
-    exe s:TERM . cmd
-  endif
+
+  call arduino#RunCmd(cmd)
   return v:shell_error
 endfunction
 
 function! arduino#Serial() abort
   let cmd = arduino#GetSerialCmd()
   if empty(cmd) | return | endif
-  if g:arduino_use_slime
-    call slime#send(cmd."\r")
-  else
-    exe s:TERM . cmd
-  endif
+
+  call arduino#RunCmd(cmd)
 endfunction
 
 function! arduino#UploadAndSerial() abort
