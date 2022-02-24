@@ -4,7 +4,7 @@ endif
 let g:loaded_arduino_autoload = 1
 let s:has_cli = executable('arduino-cli') == 1
 if has('win64') || has('win32') || has('win16')
-  echoerr "vim-arduino does not support windows :("
+  echoerr 'vim-arduino does not support windows :('
   finish
 endif
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
@@ -132,7 +132,7 @@ function! arduino#ReloadBoards() abort
     call arduino#AddHardwareDir('arduino', 'avr', '/etc/arduino')
   endif
   if empty(s:hardware_dirs)
-    echoerr "Could not find any boards.txt or programmers.txt files. Please set g:arduino_dir and/or g:arduino_home_dir (see help for details)"
+    echoerr 'Could not find any boards.txt or programmers.txt files. Please set g:arduino_dir and/or g:arduino_home_dir (see help for details)'
   endif
 endfunction
 
@@ -148,8 +148,8 @@ function! arduino#AddHardwareDir(package, arch, file) abort
     return
   endif
   let s:hardware_dirs[filepath] = {
-    \ "package": a:package,
-    \ "arch": a:arch,
+    \ 'package': a:package,
+    \ 'arch': a:arch,
     \}
 endfunction
 
@@ -159,7 +159,7 @@ function! arduino#LoadCache() abort
   let s:cache_dir = exists('$XDG_CACHE_HOME') ? $XDG_CACHE_HOME : $HOME . '/.cache'
   let s:cache = s:cache_dir . '/arduino_cache.vim'
   if filereadable(s:cache)
-    exec "source " . s:cache
+    exec 'source ' . s:cache
   endif
 endfunction
 
@@ -178,7 +178,7 @@ endfunction
 function! arduino#GetArduinoExecutable() abort
   if exists('g:arduino_cmd')
     return g:arduino_cmd
-  elseif s:OS == 'Darwin'
+  elseif s:OS ==? 'Darwin'
     return '/Applications/Arduino.app/Contents/MacOS/Arduino'
   else
     return 'arduino'
@@ -209,9 +209,9 @@ function! arduino#GetCLICompileCommand(...) abort
     let cmd = cmd . ' --build-path "' . l:build_path . '"'
   endif
   if a:0
-    let cmd = cmd . " " . a:1
+    let cmd = cmd . ' ' . a:1
   endif
-  return cmd . " " . g:arduino_cli_args . ' "' . expand('%:p') . '"'
+  return cmd . ' ' . g:arduino_cli_args . ' "' . expand('%:p') . '"'
 endfunction
 
 function! arduino#GetArduinoCommand(cmd) abort
@@ -221,19 +221,19 @@ function! arduino#GetArduinoCommand(cmd) abort
     let arduino = s:HERE . '/bin/run-headless ' . arduino
   endif
 
-  let cmd = arduino . ' ' . a:cmd . " --board " . g:arduino_board
+  let cmd = arduino . ' ' . a:cmd . ' --board ' . g:arduino_board
   let port = arduino#GetPort()
   if !empty(port)
-    let cmd = cmd . " --port " . port
+    let cmd = cmd . ' --port ' . port
   endif
   if !empty(g:arduino_programmer)
-    let cmd = cmd . " --pref programmer=" . g:arduino_programmer
+    let cmd = cmd . ' --pref programmer=' . g:arduino_programmer
   endif
   let l:build_path = arduino#GetBuildPath()
   if !empty(l:build_path)
-    let cmd = cmd . " --pref " . '"build.path=' . l:build_path . '"'
+    let cmd = cmd . ' --pref ' . '"build.path=' . l:build_path . '"'
   endif
-  let cmd = cmd . " " . g:arduino_args . ' "' . expand('%:p') . '"'
+  let cmd = cmd . ' ' . g:arduino_args . ' "' . expand('%:p') . '"'
   return cmd
 endfunction
 
@@ -410,7 +410,7 @@ function! arduino#RebuildMakePrg() abort
   if g:arduino_use_cli
     let &l:makeprg = arduino#GetCLICompileCommand()
   else
-    let &l:makeprg = arduino#GetArduinoCommand("--verify")
+    let &l:makeprg = arduino#GetArduinoCommand('--verify')
   endif
 endfunction
 
@@ -429,7 +429,7 @@ function! arduino#ChoosePort(...) abort
   endif
   let ports = arduino#GetPorts()
   if empty(ports)
-    echoerr "No likely serial ports detected!"
+    echoerr 'No likely serial ports detected!'
   else
     call arduino#chooser#Choose('Select Port', ports, 'arduino#SelectPort')
   endif
@@ -528,7 +528,7 @@ function! arduino#Verify() abort
   if g:arduino_use_cli
     let cmd = arduino#GetCLICompileCommand()
   else
-    let cmd = arduino#GetArduinoCommand("--verify")
+    let cmd = arduino#GetArduinoCommand('--verify')
   endif
 
   call arduino#RunCmd(cmd)
@@ -540,9 +540,9 @@ function! arduino#Upload() abort
     let cmd = arduino#GetCLICompileCommand('-u')
   else
     if empty(g:arduino_programmer)
-      let cmd_options = "--upload"
+      let cmd_options = '--upload'
     else
-      let cmd_options = "--upload --useprogrammer"
+      let cmd_options = '--upload --useprogrammer'
     endif
     let cmd = arduino#GetArduinoCommand(cmd_options)
   endif
@@ -570,7 +570,7 @@ endfunction
 function! arduino#GetSerialCmd() abort
   let port = arduino#GetPort()
   if empty(port)
-    echoerr "Error! No serial port found"
+    echoerr 'Error! No serial port found'
     return ''
   endif
   let l:cmd = substitute(g:arduino_serial_cmd, '{port}', port, 'g')
@@ -584,7 +584,7 @@ endfunction
 
 function! arduino#SetAutoBaud() abort
   let n = 1
-  while n < line("$")
+  while n < line('$')
     let match = matchlist(getline(n), 'Serial[0-9]*\.begin(\([0-9]*\)')
     if len(match) >= 2
       let g:arduino_serial_baud = match[1]
@@ -640,7 +640,7 @@ function! arduino#GetArduinoDir() abort
   let executable = arduino#GetArduinoExecutable()
   let arduino_cmd = exepath(executable)
   let arduino_dir = fnamemodify(arduino_cmd, ':h')
-  if s:OS == 'Darwin'
+  if s:OS ==? 'Darwin'
     let arduino_dir = fnamemodify(arduino_dir, ':h') . '/Java'
   endif
   return arduino_dir
@@ -650,30 +650,30 @@ function! arduino#GetArduinoHomeDir() abort
   if exists('g:arduino_home_dir')
     return g:arduino_home_dir
   endif
-  if s:OS == 'Darwin'
-    return $HOME . "/Library/Arduino15"
+  if s:OS ==? 'Darwin'
+    return $HOME . '/Library/Arduino15'
   endif
 
-  return $HOME . "/.arduino15"
+  return $HOME . '/.arduino15'
 endfunction
 
 " Print the current configuration
 function! arduino#GetInfo() abort
   let port = arduino#GetPort()
   if empty(port)
-      let port = "none"
+      let port = 'none'
   endif
   let dirs = join(keys(s:hardware_dirs), ', ')
   if empty(dirs)
     let dirs = 'None'
   endif
-  echo "Board         : " . g:arduino_board
-  echo "Programmer    : " . g:arduino_programmer
-  echo "Port          : " . port
-  echo "Baud rate     : " . g:arduino_serial_baud
-  echo "Hardware dirs : " . dirs
+  echo 'Board         : ' . g:arduino_board
+  echo 'Programmer    : ' . g:arduino_programmer
+  echo 'Port          : ' . port
+  echo 'Baud rate     : ' . g:arduino_serial_baud
+  echo 'Hardware dirs : ' . dirs
   if g:arduino_use_cli
-    echo "Verify command: " . arduino#GetCLICompileCommand()
+    echo 'Verify command: ' . arduino#GetCLICompileCommand()
   else
     echo "Verify command: " . arduino#GetArduinoCommand("--verify")
   endif
