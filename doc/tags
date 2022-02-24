@@ -15,6 +15,7 @@
 'g:arduino_use_cli'	arduino.txt	/*'g:arduino_use_cli'*
 'g:arduino_use_slime'	arduino.txt	/*'g:arduino_use_slime'*
 'vim-arduino'	arduino.txt	/*'vim-arduino'*
+:ArduinoAttach	arduino.txt	/*:ArduinoAttach*
 :ArduinoChooseBoard	arduino.txt	/*:ArduinoChooseBoard*
 :ArduinoChoosePort	arduino.txt	/*:ArduinoChoosePort*
 :ArduinoChooseProgrammer	arduino.txt	/*:ArduinoChooseProgrammer*

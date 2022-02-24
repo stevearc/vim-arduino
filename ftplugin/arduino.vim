@@ -17,6 +17,7 @@ if g:arduino_auto_baud
   au BufReadPost,BufWritePost *.ino call arduino#SetAutoBaud()
 endif
 
+command! -buffer -bar -nargs=? ArduinoAttach call arduino#Attach(<f-args>)
 command! -buffer -bar -nargs=? ArduinoChooseBoard call arduino#ChooseBoard(<f-args>)
 command! -buffer -bar -nargs=? ArduinoChooseProgrammer call arduino#ChooseProgrammer(<f-args>)
 command! -buffer -bar ArduinoVerify call arduino#Verify()

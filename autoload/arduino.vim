@@ -20,6 +20,7 @@ else
   let s:TERM = '!'
 endif
 let s:hardware_dirs = {}
+let s:SKETCHFILE = v:null
 python3 import json
 
 " Initialization {{{1
@@ -82,6 +83,7 @@ function! arduino#InitializeConfig() abort
     echoerr 'arduino-cli: command not found'
   endif
   call arduino#ReloadBoards()
+  call s:ReadSketchJson()
 endfunction
 
 function! arduino#RunCmd(cmd) abort
@@ -196,10 +198,13 @@ function! arduino#GetBuildPath() abort
 endfunction
 
 function! arduino#GetCLICompileCommand(...) abort
-  let cmd = 'arduino-cli compile -b ' . g:arduino_board
-  let port = arduino#GetPort()
-  if !empty(port)
-    let cmd = cmd . ' -p ' . port
+  let cmd = 'arduino-cli compile'
+  if s:SKETCHFILE == v:null
+    let cmd = cmd . ' -b ' . g:arduino_board
+    let port = arduino#GetPort()
+    if !empty(port)
+      let cmd = cmd . ' -p ' . port
+    endif
   endif
   if !empty(g:arduino_programmer)
     let cmd = cmd . ' -P ' . g:arduino_programmer
@@ -420,6 +425,31 @@ function! s:ChooserItemOrder(i1, i2) abort
   return l1 == l2 ? 0 : l1 > l2 ? 1 : -1
 endfunction
 
+function! arduino#Attach(...) abort
+  if !s:has_cli
+    echoerr 'ArduinoAttach requires arduino-cli'
+    return
+  end
+  let port = v:null
+  if a:0
+    let port = a:1
+    function PostAttach() abort
+      call s:ReadSketchJson()
+      call s:notify('Arduino attached to board ' . g:arduino_board)
+    endfunction
+    call arduino#job#run(['arduino-cli', 'board', 'attach', '-p', port], funcref('PostAttach'))
+  else
+    let ports = arduino#GetPorts()
+    if empty(ports)
+      echoerr 'No likely serial ports detected!'
+    elseif len(ports) == 1
+      call arduino#Attach(ports[0])
+    else
+      call arduino#chooser#Choose('Select Port', ports, 'arduino#Attach')
+    endif
+  endif
+endfunction
+
 " Port selection {{{2
 
 function! arduino#ChoosePort(...) abort
@@ -437,6 +467,7 @@ endfunction
 
 function! arduino#SelectPort(port) abort
   let g:arduino_serial_port = a:port
+  call s:WriteSketchKey('port', 'serial://' . g:arduino_serial_port)
 endfunction
 
 " Board selection {{{2
@@ -465,6 +496,9 @@ function! arduino#SelectBoard(board) abort
         \}
   " Have to delay this to give the previous chooser UI time to clear
   call timer_start(10, {tid -> arduino#ChooseBoardOption()})
+  if empty(options)
+    call s:WriteSketchKey('fqbn', g:arduino_board)
+  endif
 endfunction
 
 " Prompt user for the next unselected board option
@@ -474,9 +508,10 @@ function! arduino#ChooseBoardOption() abort
     if !has_key(s:callback_data.opts, opt.option)
       let s:callback_data.active_option = opt.option
       call arduino#chooser#Choose(opt.option_label, opt.values, 'arduino#SelectOption')
-      return
+      return v:true
     endif
   endfor
+  return v:false
 endfunction
 
 " Callback from option selection
@@ -484,7 +519,10 @@ function! arduino#SelectOption(value) abort
   let opt = s:callback_data.active_option
   let s:callback_data.opts[opt] = a:value
   call arduino#SetBoard(s:callback_data.board, s:callback_data.opts)
-  call arduino#ChooseBoardOption()
+  let choosing = arduino#ChooseBoardOption()
+  if !choosing
+    call s:WriteSketchKey('fqbn', g:arduino_board)
+  endif
 endfunction
 
 " Programmer selection {{{2
@@ -626,6 +664,49 @@ endfunction
 
 " Utility functions {{{1
 
+function! s:ReadSketchJson() abort
+  let dir = getcwd()
+  while v:true
+    let sketch = dir . '/sketch.json'
+    if filereadable(sketch)
+      let data = json_decode(join(readfile(sketch)))
+      let cpu = get(data, 'cpu', {})
+      if !empty(cpu)
+        let s:SKETCHFILE = sketch
+        let board = get(cpu, 'fqbn', '')
+        if !empty(board)
+          let g:arduino_board = board
+        endif
+        let port = get(cpu, 'port', '')
+        if !empty(port)
+          if port =~? '^serial://'
+            let port = strcharpart(port, 9)
+          endif
+          let g:arduino_serial_port = port
+        endif
+      endif
+      return
+    endif
+    let next_dir = fnamemodify(dir, ':h')
+    if next_dir == dir
+      break
+    else
+      let dir = next_dir
+    endif
+  endwhile
+  let s:SKETCHFILE = v:null
+endfunction
+
+function s:WriteSketchKey(key, value) abort
+  if s:SKETCHFILE == v:null
+    return
+  endif
+  let data = json_decode(join(readfile(s:SKETCHFILE)))
+  let cpu = get(data, 'cpu', {})
+  let cpu[a:key] = a:value
+  call writefile([json_encode(data)], s:SKETCHFILE)
+endfunction
+
 function! s:CacheLine(lines, varname) abort
   if exists(a:varname)
     let value = eval(a:varname)
@@ -675,7 +756,15 @@ function! arduino#GetInfo() abort
   if g:arduino_use_cli
     echo 'Verify command: ' . arduino#GetCLICompileCommand()
   else
-    echo "Verify command: " . arduino#GetArduinoCommand("--verify")
+    echo 'Verify command: ' . arduino#GetArduinoCommand('--verify')
+  endif
+endfunction
+
+function! s:notify(msg) abort
+  if has('nvim')
+    call luaeval('vim.notify(_A)', a:msg)
+  else
+    echo a:msg
   endif
 endfunction
 

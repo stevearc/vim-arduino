@@ -153,6 +153,13 @@ Search these patterns to find a likely serial port to upload to. >
 
 ===============================================================================
 COMMANDS                                                       *arduino-commands*
+
+                                                                 *:ArduinoAttach*
+:ArduinoAttach [port]
+   Automatically attach to your board (see `arduino-cli board attach -h`). If
+   no port is provided and there is more than one option, you will be prompted
+   to select one.
+
                                                             *:ArduinoChooseBoard*
 :ArduinoChooseBoard [board]
    Set [board] to be the currently selected board. It should match the format

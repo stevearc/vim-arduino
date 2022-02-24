@@ -95,6 +95,7 @@ users make sure the `arduino` command is in your PATH.
 
 | Command                   | arg          | description                                                                 |
 | ------------------------- | ------------ | --------------------------------------------------------------------------- |
+| `ArduinoAttach`           | [port]       | Automatically attach to your board (see `arduino-cli board attach -h`)      |
 | `ArduinoChooseBoard`      | [board]      | Select the type of board. With no arg, will present a choice dialog.        |
 | `ArduinoChooseProgrammer` | [programmer] | Select the programmer. With no arg, will present a choice dialog.           |
 | `ArduinoChoosePort`       | [port]       | Select the serial port. With no arg, will present a choice dialog.          |
@@ -109,6 +110,7 @@ can put them in `ftplugin/arduino.vim`:
 
 ```vim
 " Change these as desired
+nnoremap <buffer> <leader>aa <cmd>ArduinoAttach<CR>
 nnoremap <buffer> <leader>am <cmd>ArduinoVerify<CR>
 nnoremap <buffer> <leader>au <cmd>ArduinoUpload<CR>
 nnoremap <buffer> <leader>ad <cmd>ArduinoUploadAndSerial<CR>
