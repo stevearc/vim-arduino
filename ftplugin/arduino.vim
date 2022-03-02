@@ -14,7 +14,10 @@ setl cindent
 call arduino#RebuildMakePrg()
 
 if g:arduino_auto_baud
-  au BufReadPost,BufWritePost *.ino call arduino#SetAutoBaud()
+  aug ArduinoBaud
+    au!
+    au BufReadPost,BufWritePost *.ino call arduino#SetAutoBaud()
+  aug END
 endif
 
 command! -buffer -bar -nargs=? ArduinoAttach call arduino#Attach(<f-args>)
