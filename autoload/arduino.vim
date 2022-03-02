@@ -21,7 +21,6 @@ else
 endif
 let s:hardware_dirs = {}
 let s:SKETCHFILE = v:null
-python3 import json
 
 " Initialization {{{1
 " Set up all user configuration variables
@@ -83,7 +82,11 @@ function! arduino#InitializeConfig() abort
     echoerr 'arduino-cli: command not found'
   endif
   call arduino#ReloadBoards()
-  call s:ReadSketchJson()
+  call s:ReadSketchJson(expand('%:p:h'))
+  aug ArduinoReadSketch
+    au!
+    au BufReadPost *.ino call s:ReadSketchJson(expand('<amatch>:p:h'))
+  aug END
 endfunction
 
 function! arduino#RunCmd(cmd) abort
@@ -433,8 +436,9 @@ function! arduino#Attach(...) abort
   let port = v:null
   if a:0
     let port = a:1
-    function PostAttach() abort
-      call s:ReadSketchJson()
+    let dir = expand('%:p:h')
+    function PostAttach() closure
+      call s:ReadSketchJson(dir)
       call s:notify('Arduino attached to board ' . g:arduino_board)
     endfunction
     call arduino#job#run(['arduino-cli', 'board', 'attach', '-p', port], funcref('PostAttach'))
@@ -664,8 +668,8 @@ endfunction
 
 " Utility functions {{{1
 
-function! s:ReadSketchJson() abort
-  let dir = getcwd()
+function! s:ReadSketchJson(dir) abort
+  let dir = a:dir
   while v:true
     let sketch = dir . '/sketch.json'
     if filereadable(sketch)
