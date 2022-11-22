@@ -600,11 +600,15 @@ function! arduino#Serial() abort
   call arduino#RunCmd(cmd)
 endfunction
 
-function! arduino#UploadAndSerial() abort
+function! arduino#UploadAndSerial()
+  " Since 'terminal!' is non-blocking '!' must be used to provide this functionality
+  let termBackup = s:TERM
+  let s:TERM = '!'
   let ret = arduino#Upload()
   if ret == 0
     call arduino#Serial()
   endif
+  let s:TERM = termBackup
 endfunction
 
 " Serial helpers {{{2
