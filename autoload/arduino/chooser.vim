@@ -123,12 +123,12 @@ function! s:mk_fzf_callback(callback)
 endfunction
 
 " telescope extension {{{1
-if !exists('g:arduino_telescope_enabled') && exists('*luaeval')
+if !exists('g:arduino_telescope_enabled') && has('nvim')
   let g:arduino_telescope_enabled = luaeval("pcall(require, 'telescope')")
 endif
 
 " neovim vim.ui.select {{{1
-if !exists('g:arduino_nvim_select_enabled') && exists('*luaeval')
+if !exists('g:arduino_nvim_select_enabled') && has('nvim')
   let g:arduino_nvim_select_enabled = luaeval('(vim.ui and vim.ui.select) ~= nil')
 endif
 
