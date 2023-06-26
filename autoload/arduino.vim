@@ -4,11 +4,11 @@ endif
 let g:loaded_arduino_autoload = 1
 let s:has_cli = executable('arduino-cli') == 1
 if has('win64') || has('win32') || has('win16')
-  echoerr 'vim-arduino does not support windows :('
-  finish
+  let s:OS = 'Windows'
+else
+  let s:OS = substitute(system('uname'), '\n', '', '')
 endif
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
-let s:OS = substitute(system('uname'), '\n', '', '')
 " In neovim, run the shell commands using :terminal to preserve interactivity
 if has('nvim')
   let s:TERM = 'botright split | terminal! '
@@ -47,6 +47,11 @@ function! arduino#InitializeConfig() abort
   endif
   if !exists('g:arduino_serial_cmd')
     let g:arduino_serial_cmd = 'screen {port} {baud}'
+    if s:OS ==? 'Windows'
+      let g:arduino_serial_cmd = 'arduino-cli monitor -p {port} --config baudrate={baud}'
+    else
+      let g:arduino_serial_cmd = 'screen {port} {baud}'
+    endif
   endif
   if !exists('g:arduino_build_path')
     let g:arduino_build_path = '{project_dir}/build'
@@ -195,8 +200,8 @@ function! arduino#GetBuildPath() abort
     return ''
   endif
   let l:path = g:arduino_build_path
-  let l:path = substitute(l:path, '{file}', expand('%:p'), 'g')
-  let l:path = substitute(l:path, '{project_dir}', expand('%:p:h'), 'g')
+  let l:path = substitute(l:path, '{file}', substitute(expand('%:p'), '\', '/', 'g'), 'g')
+  let l:path = substitute(l:path, '{project_dir}', substitute(expand('%:p:h'), '\', '/', 'g'), 'g')
   return l:path
 endfunction
 
@@ -648,6 +653,12 @@ function! arduino#GetPorts() abort
       call add(ports, port)
     endfor
   endfor
+  if s:OS ==? 'Windows'
+    let found = split(system('pwsh -nop -c "arduino-cli board list | Select-String -Pattern \"^(COM\d) \" | ForEach-Object { $_.Matches.Value }"'), '\n')
+    for port in found
+      call add(ports, port)
+    endfor
+  endif 
   return ports
 endfunction
 
@@ -741,6 +752,8 @@ function! arduino#GetArduinoHomeDir() abort
   endif
   if s:OS ==? 'Darwin'
     return $HOME . '/Library/Arduino15'
+  elseif s:OS ==? 'Windows'
+    return $HOME . '/AppData/Local/Arduino15'
   endif
 
   return $HOME . '/.arduino15'
