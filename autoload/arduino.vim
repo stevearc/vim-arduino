@@ -47,16 +47,10 @@ function! arduino#InitializeConfig() abort
   endif
   if !exists('g:arduino_serial_cmd')
     let g:arduino_serial_cmd = 'screen {port} {baud}'
-    if s:OS ==? 'Windows'
-      let g:arduino_serial_cmd = 'arduino-cli monitor -p {port} --config baudrate={baud}'
-    else
-      let g:arduino_serial_cmd = 'screen {port} {baud}'
-    endif
   endif
   if !exists('g:arduino_build_path')
     let g:arduino_build_path = '{project_dir}/build'
   endif
-
   if !exists('g:arduino_serial_baud')
     let g:arduino_serial_baud = 9600
   endif
@@ -69,11 +63,9 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_use_vimux') || !exists('$TMUX')
     let g:arduino_use_vimux = 0
   endif
-
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') == 1
   endif
-
   if !exists('g:arduino_serial_port_globs')
     let g:arduino_serial_port_globs = ['/dev/ttyACM*',
                                       \'/dev/ttyUSB*',
@@ -83,6 +75,9 @@ function! arduino#InitializeConfig() abort
   endif
   if !exists('g:arduino_use_cli')
     let g:arduino_use_cli = s:has_cli
+    if g:arduino_use_cli
+      let g:arduino_serial_cmd = 'arduino-cli monitor -p {port} --config baudrate={baud}'
+    endif
   elseif g:arduino_use_cli && !s:has_cli
     echoerr 'arduino-cli: command not found'
   endif
@@ -654,9 +649,9 @@ function! arduino#GetPorts() abort
     endfor
   endfor
   if s:OS ==? 'Windows'
-    let found = split(system('pwsh -nop -c "arduino-cli board list | Select-String -Pattern \"^(COM\d) \" | ForEach-Object { $_.Matches.Value }"'), '\n')
-    for port in found
-      call add(ports, port)
+    let boards_data = json_decode(system('arduino-cli board list --format json'))
+    for board in boards_data
+      call add(ports, board['port']['address'])
     endfor
   endif 
   return ports
