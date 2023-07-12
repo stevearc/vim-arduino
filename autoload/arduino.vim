@@ -578,6 +578,13 @@ function! arduino#Verify() abort
 endfunction
 
 function! arduino#Upload() abort
+  let cmd = arduino#UploadGetCmd()
+
+  call arduino#RunCmd(cmd)
+  return v:shell_error
+endfunction
+
+function! arduino#UploadGetCmd() abort
   if g:arduino_use_cli
     let cmd = arduino#GetCLICompileCommand('-u')
   else
@@ -588,9 +595,7 @@ function! arduino#Upload() abort
     endif
     let cmd = arduino#GetArduinoCommand(cmd_options)
   endif
-
-  call arduino#RunCmd(cmd)
-  return v:shell_error
+  return cmd
 endfunction
 
 function! arduino#Serial() abort
@@ -601,14 +606,11 @@ function! arduino#Serial() abort
 endfunction
 
 function! arduino#UploadAndSerial()
-  " Since 'terminal!' is non-blocking '!' must be used to provide this functionality
-  let termBackup = s:TERM
-  let s:TERM = '!'
-  let ret = arduino#Upload()
-  if ret == 0
-    call arduino#Serial()
-  endif
-  let s:TERM = termBackup
+  let upload = arduino#UploadGetCmd()
+  let serial = arduino#GetSerialCmd()
+  if empty(serial) | return | endif
+
+  call arduino#RunCmd(upload . " && " . serial)
 endfunction
 
 " Serial helpers {{{2
