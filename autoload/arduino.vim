@@ -4,11 +4,11 @@ endif
 let g:loaded_arduino_autoload = 1
 let s:has_cli = executable('arduino-cli') == 1
 if has('win64') || has('win32') || has('win16')
-  echoerr 'vim-arduino does not support windows :('
-  finish
+  let s:OS = 'Windows'
+else
+  let s:OS = substitute(system('uname'), '\n', '', '')
 endif
 let s:HERE = resolve(expand('<sfile>:p:h:h'))
-let s:OS = substitute(system('uname'), '\n', '', '')
 " In neovim, run the shell commands using :terminal to preserve interactivity
 if has('nvim')
   let s:TERM = 'botright split | terminal! '
@@ -51,7 +51,6 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_build_path')
     let g:arduino_build_path = '{project_dir}/build'
   endif
-
   if !exists('g:arduino_serial_baud')
     let g:arduino_serial_baud = 9600
   endif
@@ -64,11 +63,9 @@ function! arduino#InitializeConfig() abort
   if !exists('g:arduino_use_vimux') || !exists('$TMUX')
     let g:arduino_use_vimux = 0
   endif
-
   if !exists('g:arduino_run_headless')
     let g:arduino_run_headless = executable('Xvfb') == 1
   endif
-
   if !exists('g:arduino_serial_port_globs')
     let g:arduino_serial_port_globs = ['/dev/ttyACM*',
                                       \'/dev/ttyUSB*',
@@ -78,6 +75,9 @@ function! arduino#InitializeConfig() abort
   endif
   if !exists('g:arduino_use_cli')
     let g:arduino_use_cli = s:has_cli
+    if g:arduino_use_cli
+      let g:arduino_serial_cmd = 'arduino-cli monitor -p {port} --config baudrate={baud}'
+    endif
   elseif g:arduino_use_cli && !s:has_cli
     echoerr 'arduino-cli: command not found'
   endif
@@ -195,8 +195,8 @@ function! arduino#GetBuildPath() abort
     return ''
   endif
   let l:path = g:arduino_build_path
-  let l:path = substitute(l:path, '{file}', expand('%:p'), 'g')
-  let l:path = substitute(l:path, '{project_dir}', expand('%:p:h'), 'g')
+  let l:path = substitute(l:path, '{file}', substitute(expand('%:p'), '\', '/', 'g'), 'g')
+  let l:path = substitute(l:path, '{project_dir}', substitute(expand('%:p:h'), '\', '/', 'g'), 'g')
   return l:path
 endfunction
 
@@ -578,6 +578,13 @@ function! arduino#Verify() abort
 endfunction
 
 function! arduino#Upload() abort
+  let cmd = arduino#UploadGetCmd()
+
+  call arduino#RunCmd(cmd)
+  return v:shell_error
+endfunction
+
+function! arduino#UploadGetCmd() abort
   if g:arduino_use_cli
     let cmd = arduino#GetCLICompileCommand('-u')
   else
@@ -588,9 +595,7 @@ function! arduino#Upload() abort
     endif
     let cmd = arduino#GetArduinoCommand(cmd_options)
   endif
-
-  call arduino#RunCmd(cmd)
-  return v:shell_error
+  return cmd
 endfunction
 
 function! arduino#Serial() abort
@@ -601,14 +606,11 @@ function! arduino#Serial() abort
 endfunction
 
 function! arduino#UploadAndSerial()
-  " Since 'terminal!' is non-blocking '!' must be used to provide this functionality
-  let termBackup = s:TERM
-  let s:TERM = '!'
-  let ret = arduino#Upload()
-  if ret == 0
-    call arduino#Serial()
-  endif
-  let s:TERM = termBackup
+  let upload = arduino#UploadGetCmd()
+  let serial = arduino#GetSerialCmd()
+  if empty(serial) | return | endif
+
+  call arduino#RunCmd(upload . " && " . serial)
 endfunction
 
 " Serial helpers {{{2
@@ -648,6 +650,12 @@ function! arduino#GetPorts() abort
       call add(ports, port)
     endfor
   endfor
+  if s:OS ==? 'Windows'
+    let boards_data = json_decode(system('arduino-cli board list --format json'))
+    for board in boards_data
+      call add(ports, board['port']['address'])
+    endfor
+  endif 
   return ports
 endfunction
 
@@ -741,6 +749,8 @@ function! arduino#GetArduinoHomeDir() abort
   endif
   if s:OS ==? 'Darwin'
     return $HOME . '/Library/Arduino15'
+  elseif s:OS ==? 'Windows'
+    return $HOME . '/AppData/Local/Arduino15'
   endif
 
   return $HOME . '/.arduino15'
