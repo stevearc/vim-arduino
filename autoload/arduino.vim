@@ -25,6 +25,11 @@ let s:SKETCHFILE = v:null
 " Initialization {{{1
 " Set up all user configuration variables
 function! arduino#InitializeConfig() abort
+  if exists('g:arduino_did_initialize')
+    return
+  endif
+  call arduino#LoadCache()
+
   if !exists('g:arduino_board')
     if exists('g:_cache_arduino_board')
       let g:arduino_board = g:_cache_arduino_board
@@ -87,6 +92,7 @@ function! arduino#InitializeConfig() abort
     au!
     au BufReadPost *.ino call s:ReadSketchJson(expand('<amatch>:p:h'))
   aug END
+  let g:arduino_did_initialize = 1
 endfunction
 
 function! arduino#RunCmd(cmd) abort
@@ -429,6 +435,7 @@ function! s:ChooserItemOrder(i1, i2) abort
 endfunction
 
 function! arduino#Attach(...) abort
+  call arduino#InitializeConfig()
   if !s:has_cli
     echoerr 'ArduinoAttach requires arduino-cli'
     return
@@ -457,6 +464,7 @@ endfunction
 " Port selection {{{2
 
 function! arduino#ChoosePort(...) abort
+  call arduino#InitializeConfig()
   if a:0
     let g:arduino_serial_port = a:1
     return
@@ -480,6 +488,7 @@ let s:callback_data = {}
 
 " Display a list of boards to the user and allow them to choose the active one
 function! arduino#ChooseBoard(...) abort
+  call arduino#InitializeConfig()
   if a:0
     call arduino#SetBoard(a:1)
     return
@@ -532,6 +541,7 @@ endfunction
 " Programmer selection {{{2
 
 function! arduino#ChooseProgrammer(...) abort
+  call arduino#InitializeConfig()
   if a:0
     call arduino#SetProgrammer(a:1)
     return
@@ -567,6 +577,7 @@ function! arduino#SetBoard(board, ...) abort
 endfunction
 
 function! arduino#Verify() abort
+  call arduino#InitializeConfig()
   if g:arduino_use_cli
     let cmd = arduino#GetCLICompileCommand()
   else
@@ -578,6 +589,7 @@ function! arduino#Verify() abort
 endfunction
 
 function! arduino#Upload() abort
+  call arduino#InitializeConfig()
   if g:arduino_use_cli
     let cmd = arduino#GetCLICompileCommand('-u')
   else
@@ -594,6 +606,7 @@ function! arduino#Upload() abort
 endfunction
 
 function! arduino#Serial() abort
+  call arduino#InitializeConfig()
   let cmd = arduino#GetSerialCmd()
   if empty(cmd) | return | endif
 
@@ -601,6 +614,7 @@ function! arduino#Serial() abort
 endfunction
 
 function! arduino#UploadAndSerial()
+  call arduino#InitializeConfig()
   " Since 'terminal!' is non-blocking '!' must be used to provide this functionality
   let termBackup = s:TERM
   let s:TERM = '!'
@@ -748,6 +762,7 @@ endfunction
 
 " Print the current configuration
 function! arduino#GetInfo() abort
+  call arduino#InitializeConfig()
   let port = arduino#GetPort()
   if empty(port)
       let port = 'none'
