@@ -222,6 +222,7 @@ function! arduino#GetCLICompileCommand(...) abort
   if !empty(l:build_path)
     let cmd = cmd . ' --build-path "' . l:build_path . '"'
   endif
+  let cmd = cmd . ' --libraries "' . 'libraries' . '"'
   if a:0
     let cmd = cmd . ' ' . a:1
   endif
